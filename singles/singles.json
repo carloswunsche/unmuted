@@ -1,0 +1,12 @@
+{
+  "title": "Singles",
+  "year": 2026,
+  "cover": "cover.jpg",
+  "tracks": [
+    {
+      "title": "This time",
+      "src": "This time.flac",
+      "duration": 180
+    }
+  ]
+}
