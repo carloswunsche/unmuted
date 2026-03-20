@@ -1,0 +1,14 @@
+{
+  "schema": "unmuted/v1",
+  "name": "Carlos Wunsche",
+  "bio": "Composer and multi-instrumentalist from Argentina, based in Miami. My music borrows from film scores, rock, pop, and the video games I grew up playing — built on guitar, piano, and voice.",
+  "avatar": "avatar.jpg",
+  "links": {
+    "instagram": "https://instagram.com/carloswunsche",
+    "youtube": "https://youtube.com/carl.wunsche",
+    "soundcloud": "https://soundcloud.com/carl.wunsche"
+  },
+  "albums": [
+    "singles/singles.json"
+  ]
+}
