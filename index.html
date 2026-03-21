@@ -522,7 +522,7 @@ function renderSection(name) {
         }).catch(()=>{});
     }
   }
-  if (name === 'links' && artistData) populateLinks(artistData.links || {});
+  if (name === 'links' && artistData) setTimeout(() => populateLinks(artistData.links || {}), 0);
 }
 
 // ── PROFILE HTML ─────────────────────────────────────────────────
@@ -1613,6 +1613,8 @@ async function saveAll() {
     const sha = artistData?._sha || await ghGetSha('artist.json');
     const result = await ghPut('artist.json', json, sha, 'Update artist profile');
     artistData = { ...profileData, _sha: result.content.sha };
+    // Re-populate links UI if currently visible so it reflects saved state
+    if (document.getElementById('l-instagram')) populateLinks(artistData.links || {});
 
     renderReleasesNav();
     setSaveStatus('saved','✓ Saved');
