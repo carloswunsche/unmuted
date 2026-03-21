@@ -1108,7 +1108,9 @@ function showConvertCard(relId, idx, file, sizeMB, mustConvert, customMsg) {
     ? 'This file is already compressed. Converting will reduce size further but may affect quality slightly.'
     : 'Converting to OGG Opus gives great quality at a much smaller size.');
 
-  document.getElementById(`tstatus-${relId}-${idx}`).innerHTML = `
+  const stEl = getTrackEl('tstatus', relId, idx);
+  if (!stEl) return;
+  stEl.innerHTML = `
     <div style="background:${mustConvert ? 'var(--danger-bg)' : 'var(--warning-bg)'};border:1px solid ${mustConvert ? 'rgba(224,108,108,.2)' : 'rgba(224,168,74,.25)'};border-radius:8px;padding:12px 14px;margin-top:8px;">
       <div style="font-size:12px;color:${mustConvert ? 'var(--danger)' : 'var(--warning)'};font-weight:600;margin-bottom:4px;">
         ${mustConvert ? `⚠️ ${sizeMB}MB — too large for GitHub (25MB limit)` : `⚠️ ${sizeMB}MB — large file, listeners may experience slow loading`}
@@ -1130,7 +1132,7 @@ function showConvertCard(relId, idx, file, sizeMB, mustConvert, customMsg) {
     </div>`;
 
   document.getElementById(`convert-btn-${relId}-${idx}`)._file = file;
-  if (!mustConvert) document.getElementById(`upload-anyway-btn-${relId}-${idx}`)._file = file;
+  if (!mustConvert) { const ub = document.getElementById(`upload-anyway-btn-${relId}-${idx}`); if (ub) ub._file = file; }
 }
 
 function uploadAnyway(relId, idx, file, folder, filename) {
