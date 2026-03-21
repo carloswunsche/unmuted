@@ -683,22 +683,73 @@ function albumHTML(rel) {
   <button class="btn btn-danger btn-sm" onclick="deleteRelease('${id}')">Delete this release</button>`;
 }
 
+function getSingleOptions() {
+  // Collect all singles tracks for the "pick from singles" dropdown
+  const opts = [{ label: '— Upload new file —', value: '' }];
+  releases.forEach(r => {
+    if (r.type !== 'singles') return;
+    (r.data.tracks || []).forEach(t => {
+      if (!t.src) return;
+      const base = r.path.substring(0, r.path.lastIndexOf('/') + 1);
+      opts.push({ label: t.title || t.src, value: base + t.src, duration: t.duration || 0, title: t.title || '' });
+    });
+  });
+  return opts;
+}
+
+function onPickSingle(relId, idx, sel) {
+  const opt = sel.options[sel.selectedIndex];
+  const src = sel.value;
+  const uploadSection = document.getElementById('tupload-' + relId + '-' + idx);
+  if (src) {
+    // Hide upload section, fill in src and duration from the single
+    if (uploadSection) uploadSection.style.display = 'none';
+    const srcEl = document.getElementById('tsrc-' + relId + '-' + idx);
+    const durEl = document.getElementById('tdur-' + relId + '-' + idx);
+    const titleEl = document.getElementById('ttitle-' + relId + '-' + idx);
+    const dispEl = document.getElementById('tdisp-' + relId + '-' + idx);
+    const fnEl = document.getElementById('tfilename-' + relId + '-' + idx);
+    if (srcEl) srcEl.value = src;
+    if (durEl) durEl.value = opt.dataset.dur || 0;
+    if (titleEl && !titleEl.value) { titleEl.value = opt.dataset.title || ''; }
+    if (dispEl && !dispEl.textContent.trim() || dispEl.textContent === 'New track') dispEl.textContent = opt.dataset.title || 'New track';
+    if (fnEl) fnEl.textContent = src.split('/').pop();
+    // Update duration display in header
+    const dur = parseInt(opt.dataset.dur || 0);
+    const durSpan = document.querySelector('#titem-' + relId + '-' + idx + ' .dur-display');
+    if (durSpan && dur) durSpan.textContent = fmtDur(dur);
+    markDirty();
+  } else {
+    if (uploadSection) uploadSection.style.display = 'block';
+  }
+}
+
 function trackRowHTML(relId, idx, track, isSingles=false) {
   const durDisplay = track.duration ? fmtDur(track.duration) : '';
   const hasLrc = track.lyrics && track.lyrics.startsWith('[');
   const lyricsMode = hasLrc ? 'lrc' : 'text';
+
+  // Build singles picker options for album tracks
+  const singleOpts = isSingles ? [] : getSingleOptions();
+  const pickerHTML = !isSingles && singleOpts.length > 1 ? `
+    <div style="margin-bottom:8px">
+      <label class="label" style="margin-bottom:4px">Pick from singles <span>(optional)</span></label>
+      <select class="input" style="height:34px;font-size:12px" onchange="onPickSingle('${relId}',${idx},this)">
+        ${singleOpts.map(o => `<option value="${esc(o.value)}" data-dur="${o.duration||0}" data-title="${esc(o.title)}">${esc(o.label)}</option>`).join('')}
+      </select>
+    </div>` : '';
+
   return `<div class="track-item" id="titem-${relId}-${idx}" data-idx="${idx}">
 
-    <!-- HEADER: number + title + duration + delete -->
+    <!-- HEADER: number + duration + delete -->
     <div class="track-item-header">
       <div class="track-num">${idx+1}</div>
-      <div class="track-title-disp" id="tdisp-${relId}-${idx}">${esc(track.title||'New track')}</div>
       ${durDisplay ? `<span class="dur-display" style="font-size:11px;color:var(--text3);margin-left:auto;margin-right:8px;font-variant-numeric:tabular-nums">${durDisplay}</span>` : '<span class="dur-display" style="margin-left:auto;margin-right:8px"></span>'}
       <button class="btn btn-danger btn-sm btn-icon" onclick="removeTrackFromRelease('${relId}',${idx})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
 
-    <!-- MAIN ROW: cover (singles) | title + year + audio -->
-    <div style="display:flex;gap:14px;align-items:flex-start;margin-top:12px">
+    <!-- MAIN ROW: cover (singles only) | fields -->
+    <div style="display:flex;gap:14px;align-items:flex-start;margin-top:10px">
 
       ${isSingles ? `
       <div style="flex-shrink:0">
@@ -713,12 +764,12 @@ function trackRowHTML(relId, idx, track, isSingles=false) {
 
       <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:8px">
 
-        <!-- Title + Year row -->
+        <!-- Title + Year -->
         <div style="display:grid;grid-template-columns:1fr ${isSingles ? '90px' : '0fr'};gap:8px">
           <div>
             <label class="label" style="margin-bottom:4px">Title</label>
             <input class="input" id="ttitle-${relId}-${idx}" type="text" value="${esc(track.title||'')}" placeholder="Song name"
-              oninput="document.getElementById('tdisp-${relId}-${idx}').textContent=this.value||'New track';markDirty()">
+              oninput="document.getElementById('tdisp-${relId}-${idx}').textContent=this.value||'';markDirty()">
           </div>
           ${isSingles ? `<div>
             <label class="label" style="margin-bottom:4px">Year</label>
@@ -726,8 +777,11 @@ function trackRowHTML(relId, idx, track, isSingles=false) {
           </div>` : ''}
         </div>
 
-        <!-- Audio file -->
-        <div>
+        <!-- Singles picker (album tracks only) -->
+        ${pickerHTML}
+
+        <!-- Audio file upload -->
+        <div id="tupload-${relId}-${idx}">
           <label class="label" style="margin-bottom:4px">Audio file</label>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <button class="btn btn-ghost btn-sm" onclick="document.getElementById('tfile-${relId}-${idx}').click()">
@@ -749,23 +803,14 @@ function trackRowHTML(relId, idx, track, isSingles=false) {
         <label class="label" style="margin-bottom:0">Lyrics <span>(optional)</span></label>
         <div style="display:flex;gap:0;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:2px">
           <button id="ltab-text-${relId}-${idx}" onclick="setLyricsTab('${relId}',${idx},'text')"
-            style="border:none;background:${lyricsMode==='text'?'var(--surface2)':'transparent'};color:${lyricsMode==='text'?'var(--text)':'var(--text3)'};font-family:var(--font);font-size:11px;font-weight:600;padding:3px 10px;border-radius:4px;cursor:pointer;transition:all var(--ease)">
-            Type
-          </button>
+            style="border:none;background:${lyricsMode==='text'?'var(--surface2)':'transparent'};color:${lyricsMode==='text'?'var(--text)':'var(--text3)'};font-family:var(--font);font-size:11px;font-weight:600;padding:3px 10px;border-radius:4px;cursor:pointer;transition:all var(--ease)">Type</button>
           <button id="ltab-lrc-${relId}-${idx}" onclick="setLyricsTab('${relId}',${idx},'lrc')"
-            style="border:none;background:${lyricsMode==='lrc'?'var(--surface2)':'transparent'};color:${lyricsMode==='lrc'?'var(--text)':'var(--text3)'};font-family:var(--font);font-size:11px;font-weight:600;padding:3px 10px;border-radius:4px;cursor:pointer;transition:all var(--ease)">
-            .lrc file
-          </button>
+            style="border:none;background:${lyricsMode==='lrc'?'var(--surface2)':'transparent'};color:${lyricsMode==='lrc'?'var(--text)':'var(--text3)'};font-family:var(--font);font-size:11px;font-weight:600;padding:3px 10px;border-radius:4px;cursor:pointer;transition:all var(--ease)">.lrc file</button>
         </div>
       </div>
-
       <div id="lpanel-text-${relId}-${idx}" style="display:${lyricsMode==='text'?'block':'none'}">
-        <textarea class="textarea" id="tlyrics-text-${relId}-${idx}"
-          style="min-height:80px;font-size:12px;line-height:1.7"
-          placeholder="Paste or type the lyrics here…"
-          oninput="markDirty()">${hasLrc ? '' : esc(track.lyrics||'')}</textarea>
+        <textarea class="textarea" id="tlyrics-text-${relId}-${idx}" style="min-height:80px;font-size:12px;line-height:1.7" placeholder="Paste or type the lyrics here…" oninput="markDirty()">${hasLrc ? '' : esc(track.lyrics||'')}</textarea>
       </div>
-
       <div id="lpanel-lrc-${relId}-${idx}" style="display:${lyricsMode==='lrc'?'block':'none'}">
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
           <button class="btn btn-ghost btn-sm" onclick="document.getElementById('tlrc-file-${relId}-${idx}').click()">
@@ -775,10 +820,7 @@ function trackRowHTML(relId, idx, track, isSingles=false) {
           <span id="tlrc-name-${relId}-${idx}" style="font-size:11px;color:var(--text3)">${hasLrc ? 'Synced lyrics loaded' : ''}</span>
         </div>
         <input type="file" id="tlrc-file-${relId}-${idx}" class="file-input" accept=".lrc" onchange="handleLrcFile('${relId}',${idx},this)">
-        <div style="font-size:11px;color:var(--text3);line-height:1.6">
-          .lrc files sync lyrics line-by-line to the music as it plays.<br>
-          You can create them with apps like <strong>LRC Maker</strong> or <strong>Aegisub</strong>.
-        </div>
+        <div style="font-size:11px;color:var(--text3);line-height:1.6">.lrc files sync lyrics line-by-line to the music as it plays.<br>You can create them with apps like <strong>LRC Maker</strong> or <strong>Aegisub</strong>.</div>
         <textarea id="tlyrics-lrc-${relId}-${idx}" style="display:none">${hasLrc ? esc(track.lyrics||'') : ''}</textarea>
       </div>
     </div>
