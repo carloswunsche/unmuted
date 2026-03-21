@@ -11,7 +11,7 @@ After this you'll never need to touch GitHub again.
 
 ---
 
-<details open>
+<details>
 <summary><h2>Step 1 — Turn on your page</h2></summary>
 
 > 📹 *GIF: Click Settings tab → Pages in sidebar → Branch dropdown select "main" → Save button*
@@ -25,8 +25,6 @@ Your page will be live in ~2 min at:
 ```
 https://YOUR-USERNAME.github.io/music/
 ```
-
-> ✅ Done? Open Step 2 below.
 
 </details>
 
@@ -43,8 +41,6 @@ https://YOUR-USERNAME.github.io/music/
 4. Scroll down and tick the **repo** checkbox
 5. Click <img src="https://img.shields.io/badge/Generate%20token-238636?style=flat-square&logoColor=white" alt="Generate token"/>
 6. **Copy the token** — you won't see it again after leaving this page
-
-> ✅ Done? Open Step 3 below.
 
 </details>
 
