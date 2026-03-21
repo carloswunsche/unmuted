@@ -26,7 +26,7 @@ After this you'll never need to touch GitHub again.
 2. In the left sidebar click **Pages**
 3. Under **Branch**, select **main** → click **Save**
 
-Your page will be live in ~2 min at:
+Your dashboard will be live in ~2 min at:
 
 ```
 https://YOUR-USERNAME.github.io/music/
