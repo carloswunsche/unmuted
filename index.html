@@ -573,18 +573,20 @@ function renderReleaseSection(id) {
   if (rel.type === 'playlist') content.innerHTML = playlistHTML(rel);
   else content.innerHTML = albumHTML(rel);
 
-  // Restore cover preview — use cache if available
-  const coverKey = `cover-${id}`;
-  if (pendingUploads[coverKey]?._b64cache) {
-    showImgPreview(coverKey, `data:image/jpeg;base64,${pendingUploads[coverKey]._b64cache}`);
-  } else if (rel.data.cover) {
-    const base = rel.path.substring(0, rel.path.lastIndexOf('/')+1);
-    ghGet(base + rel.data.cover).then(f => {
-      const b64 = f.content.replace(/\n/g,'');
-      if (!pendingUploads[coverKey]) pendingUploads[coverKey] = {};
-      pendingUploads[coverKey]._b64cache = b64;
-      showImgPreview(coverKey, `data:image/jpeg;base64,${b64}`);
-    }).catch(()=>{});
+  // Restore release-level cover (albums/playlists only — singles have per-track covers)
+  if (rel.type !== 'singles') {
+    const coverKey = `cover-${id}`;
+    if (pendingUploads[coverKey]?._b64cache) {
+      showImgPreview(coverKey, `data:image/jpeg;base64,${pendingUploads[coverKey]._b64cache}`);
+    } else if (rel.data.cover) {
+      const base = rel.path.substring(0, rel.path.lastIndexOf('/')+1);
+      ghGet(base + rel.data.cover).then(f => {
+        const b64 = f.content.replace(/\n/g,'');
+        if (!pendingUploads[coverKey]) pendingUploads[coverKey] = {};
+        pendingUploads[coverKey]._b64cache = b64;
+        showImgPreview(coverKey, `data:image/jpeg;base64,${b64}`);
+      }).catch(()=>{});
+    }
   }
 }
 
@@ -592,19 +594,22 @@ function renderReleaseSection(id) {
 function albumHTML(rel) {
   const id = rel.id;
   const d = rel.data;
-  const typeLabel = rel.type === 'singles' ? 'Singles' : 'Album / EP';
-  const typeClass = rel.type === 'singles' ? 'type-singles' : 'type-album';
-  const tracks = (d.tracks||[]).map((t,i) => trackRowHTML(id, i, t)).join('');
+  const isSingles = rel.type === 'singles';
+  const typeLabel = isSingles ? 'Singles' : 'Album / EP';
+  const typeClass = isSingles ? 'type-singles' : 'type-album';
+  const tracks = (d.tracks||[]).map((t,i) => trackRowHTML(id, i, t, isSingles)).join('');
   return `
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
     <div class="sec-title" style="margin-bottom:0">${esc(d.title||'Untitled')}</div>
     <span class="type-badge ${typeClass}">${typeLabel}</span>
   </div>
-  <p class="sec-sub">Edit this release, upload tracks and cover art.</p>
+  <p class="sec-sub">${isSingles ? 'Each single has its own cover art and release year.' : 'Edit this release, upload tracks and cover art.'}</p>
 
+  ${isSingles ? '' : `
   <div class="img-upload">
     <div class="img-preview square" id="cover-preview-${id}">
-      <img id="cover-img-${id}" src="" alt=""><div class="img-preview-ph" id="cover-ph-${id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="28" height="28"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="12" cy="12" r="3"/></svg></div>
+      <img id="cover-img-${id}" src="" alt="">
+      <div class="img-preview-ph" id="cover-ph-${id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="28" height="28"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="12" cy="12" r="3"/></svg></div>
     </div>
     <div class="img-upload-info">
       <button class="btn btn-ghost btn-sm" onclick="document.getElementById('cover-file-${id}').click()">
@@ -615,10 +620,9 @@ function albumHTML(rel) {
       <p>Square JPG or PNG, 500×500px minimum.</p>
     </div>
   </div>
-
   <div class="field-row">
     <div class="field" style="margin-bottom:0">
-      <label class="label">${rel.type === 'singles' ? 'Collection title' : 'Release title'}</label>
+      <label class="label">Release title</label>
       <input class="input" id="rel-title-${id}" type="text" value="${esc(d.title||'')}" oninput="markDirty()" placeholder="Title">
     </div>
     <div class="field" style="margin-bottom:0">
@@ -626,18 +630,24 @@ function albumHTML(rel) {
       <input class="input" id="rel-year-${id}" type="number" value="${d.year||new Date().getFullYear()}" oninput="markDirty()" placeholder="${new Date().getFullYear()}">
     </div>
   </div>
-  ${rel.type !== 'singles' ? `<div class="field" style="margin-top:16px"><label class="label">Type</label><select class="input" id="rel-type-${id}" onchange="markDirty()"><option value="album" ${d.type==='album'?'selected':''}>Album</option><option value="ep" ${d.type==='ep'?'selected':''}>EP</option></select></div>` : ''}
+  <div class="field" style="margin-top:16px">
+    <label class="label">Type</label>
+    <select class="input" id="rel-type-${id}" onchange="markDirty()">
+      <option value="album" ${d.type==='album'?'selected':''}>Album</option>
+      <option value="ep" ${d.type==='ep'?'selected':''}>EP</option>
+    </select>
+  </div>
+  `}
 
   <div class="divider"></div>
   <div class="tracks-header">
-    <span class="tracks-label">Tracks</span>
+    <span class="tracks-label">${isSingles ? 'Singles' : 'Tracks'}</span>
     <button class="btn btn-ghost btn-sm" onclick="addTrackToRelease('${id}')">
       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      Add track
+      ${isSingles ? 'Add single' : 'Add track'}
     </button>
   </div>
   <div id="tracks-${id}">${tracks}</div>
-
   <div class="divider"></div>
   <button class="btn btn-danger btn-sm" onclick="deleteRelease('${id}')">Delete this release</button>`;
 }
