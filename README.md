@@ -1,3 +1,9 @@
+<div align="right">
+
+🌐 &nbsp;**EN** &nbsp;|&nbsp; [ES](README.es.md)
+
+</div>
+
 <div align="center">
 
 <img src="https://img.shields.io/badge/Unmuted-7b5ea7?style=for-the-badge&logoColor=white" alt="Unmuted"/>
@@ -36,7 +42,7 @@ https://YOUR-USERNAME.github.io/music/
 > 📹 *GIF: github.com/settings/tokens/new → type "Unmuted" → No expiration → check repo → Generate token → copy*
 
 1. Go to **[github.com/settings/tokens/new](https://github.com/settings/tokens/new)**
-2. **Note:** type `Unmuted`
+2. **Nota:** type `Unmuted`
 3. **Expiration:** choose `No expiration`
 4. Scroll down and tick the **repo** checkbox
 5. Click <img src="https://img.shields.io/badge/Generate%20token-238636?style=flat-square&logoColor=white" alt="Generate token"/>
@@ -47,7 +53,7 @@ https://YOUR-USERNAME.github.io/music/
 ---
 
 <details>
-<summary><h2>Step 3 — Open your dashboard</h2></summary>
+<summary><h2>Step 3 — Upload your music 🎵</h2></summary>
 
 > 📹 *GIF: open dashboard URL → paste token → type username → Connect → dashboard loads*
 
@@ -56,7 +62,7 @@ https://YOUR-USERNAME.github.io/music/
    https://YOUR-USERNAME.github.io/music/
    ```
 2. Paste your token, type your GitHub username, click **Connect**
-**That's it. You're live.** 🎉
+3. Upload your music and hit **Save changes** — you're now live 🎉
 
 </details>
 
