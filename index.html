@@ -1136,7 +1136,8 @@ function showConvertCard(relId, idx, file, sizeMB, mustConvert, customMsg) {
 }
 
 function uploadAnyway(relId, idx, file, folder, filename) {
-  document.getElementById(`tstatus-${relId}-${idx}`).innerHTML = '';
+  const stEl = getTrackEl('tstatus', relId, idx);
+  if (stEl) stEl.innerHTML = '';
   queueTrackFile(relId, idx, file, folder, filename);
 }
 
@@ -1593,7 +1594,7 @@ async function saveAll() {
       await ghPutBinary(val.path, val.b64, sha, `Upload ${val.filename||val.path.split('/').pop()}`);
       if (key.startsWith('track-')) {
         const parts = key.split('-');
-        const statusEl = document.getElementById(`tstatus-${parts[1]}-${parts[2]}`);
+        const statusEl = getTrackEl('tstatus', parts[1], parts[2]);
         if (statusEl) statusEl.innerHTML = `<div class="track-status done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>${val.filename} uploaded</div>`;
       }
       pendingUploads[key].b64 = null;
