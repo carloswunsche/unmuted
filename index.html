@@ -573,7 +573,7 @@ function renderReleaseSection(id) {
   if (rel.type === 'playlist') content.innerHTML = playlistHTML(rel);
   else content.innerHTML = albumHTML(rel);
 
-  // Restore release-level cover (albums/playlists only — singles have per-track covers)
+  // Restore release-level cover (albums/playlists only)
   if (rel.type !== 'singles') {
     const coverKey = `cover-${id}`;
     if (pendingUploads[coverKey]?._b64cache) {
@@ -581,12 +581,33 @@ function renderReleaseSection(id) {
     } else if (rel.data.cover) {
       const base = rel.path.substring(0, rel.path.lastIndexOf('/')+1);
       ghGet(base + rel.data.cover).then(f => {
-        const b64 = f.content.replace(/\n/g,'');
+        const b64 = f.content.replace(/
+/g,'');
         if (!pendingUploads[coverKey]) pendingUploads[coverKey] = {};
         pendingUploads[coverKey]._b64cache = b64;
         showImgPreview(coverKey, `data:image/jpeg;base64,${b64}`);
       }).catch(()=>{});
     }
+  }
+
+  // Restore per-track covers for singles
+  if (rel.type === 'singles') {
+    const base = rel.path.substring(0, rel.path.lastIndexOf('/')+1);
+    (rel.data.tracks || []).forEach((t, idx) => {
+      if (!t.cover) return;
+      const cacheKey = `single-cover-${id}-${idx}`;
+      if (pendingUploads[cacheKey]?._b64cache) {
+        showSingleCoverPreview(id, idx, `data:image/jpeg;base64,${pendingUploads[cacheKey]._b64cache}`);
+      } else {
+        ghGet(base + t.cover).then(f => {
+          const b64 = f.content.replace(/
+/g,'');
+          if (!pendingUploads[cacheKey]) pendingUploads[cacheKey] = {};
+          pendingUploads[cacheKey]._b64cache = b64;
+          showSingleCoverPreview(id, idx, `data:image/jpeg;base64,${b64}`);
+        }).catch(()=>{});
+      }
+    });
   }
 }
 
@@ -1037,10 +1058,7 @@ function handleSingleCover(relId, idx, input) {
     // Update hidden field and preview
     const hiddenEl = document.getElementById(`tcover-${relId}-${idx}`);
     if (hiddenEl) hiddenEl.value = coverFilename;
-    const img = document.getElementById(`tcover-img-${relId}-${idx}`);
-    const ph = document.getElementById(`tcover-ph-${relId}-${idx}`);
-    if (img) { img.src = e.target.result; img.classList.add('loaded'); }
-    if (ph) ph.style.display = 'none';
+    showSingleCoverPreview(relId, idx, e.target.result);
     markDirty();
   };
   reader.readAsDataURL(file);
@@ -1297,6 +1315,13 @@ function handleImgUpload(key, path, input) {
   };
   reader.readAsDataURL(file);
 }
+function showSingleCoverPreview(relId, idx, src) {
+  const img = document.getElementById(`tcover-img-${relId}-${idx}`);
+  const ph = document.getElementById(`tcover-ph-${relId}-${idx}`);
+  if (img) { img.src = src; img.classList.add('loaded'); }
+  if (ph) ph.style.display = 'none';
+}
+
 function showImgPreview(key, src) {
   const imgEl = document.getElementById(`${key === 'avatar' ? 'avatar' : 'cover'}-img${key !== 'avatar' ? '-'+key.replace('cover-','') : ''}`);
   const phEl = document.getElementById(`${key === 'avatar' ? 'avatar' : 'cover'}-ph${key !== 'avatar' ? '-'+key.replace('cover-','') : ''}`);
