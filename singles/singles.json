@@ -1,11 +1,12 @@
 {
   "title": "Singles",
+  "type": "singles",
   "year": 2026,
   "cover": "cover.jpg",
   "tracks": [
     {
-      "title": "This time",
-      "src": "this-time.mp3",
+      "title": "This Time",
+      "src": "this-time---carlos-wunsche.webm",
       "duration": 230
     }
   ]
