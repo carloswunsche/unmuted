@@ -1002,7 +1002,7 @@ function handleTrackFile(relId, idx, input) {
   if (!titleInput.value) {
     const auto = baseName.replace(/-/g,' ').replace(/^\d+\s*/,'');
     titleInput.value = auto.charAt(0).toUpperCase() + auto.slice(1);
-    document.getElementById(`tdisp-${relId}-${idx}`).textContent = titleInput.value;
+    const dispEl = document.getElementById(`tdisp-${relId}-${idx}`); if (dispEl) dispEl.textContent = titleInput.value;
   }
 
   // Read duration
@@ -1035,7 +1035,7 @@ function handleTrackFile(relId, idx, input) {
 
   // Check size and show appropriate UI
   const sizeMB = (file.size / 1024 / 1024).toFixed(1);
-  document.getElementById(`tfilename-${relId}-${idx}`).textContent = file.name;
+  const fnEl2 = getTrackEl('tfilename', relId, idx); if (fnEl2) fnEl2.textContent = file.name;
 
   if (file.size > GH_MAX_BYTES) {
     // Definitely too large — must convert
