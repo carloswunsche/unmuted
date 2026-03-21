@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unmuted — Artist Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #13111a;
+    --bg2: #1c1927;
+    --bg3: #252233;
+    --surface: #2e2a3e;
+    --surface2: #363149;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text: #f0eeff;
+    --text2: #9b96b8;
+    --text3: #5a5470;
+    --accent: #7b5ea7;
+    --accent2: #9b7fcb;
+    --accent-glow: rgba(123,94,167,0.3);
+    --green: #4caf82;
+    --green-bg: rgba(76,175,130,0.12);
+    --green-border: rgba(76,175,130,0.25);
+    --danger: #e06c6c;
+    --danger-bg: rgba(224,108,108,0.1);
+    --warning: #e0a84a;
+    --warning-bg: rgba(224,168,74,0.1);
+    --radius: 14px;
+    --radius-sm: 10px;
+    --radius-xs: 7px;
+    --font: 'Plus Jakarta Sans', system-ui, sans-serif;
+    --ease: 0.18s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 28px; height: 60px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+  .logo { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; color: var(--text); }
+  .logo-mark {
+    width: 30px; height: 30px; background: var(--accent); border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 12px var(--accent-glow);
+  }
+  .logo-mark svg { width: 16px; height: 16px; color: #fff; }
+  .logo-sub { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-left: 4px; margin-top: 2px; }
+  .topbar-right { display: flex; align-items: center; gap: 10px; }
+  .save-status { font-size: 12px; color: var(--text3); }
+  .save-status.saved { color: var(--green); }
+  .save-status.saving { color: var(--warning); }
+
+  /* ── BUTTONS ── */
+  .btn {
+    font-family: var(--font); font-size: 13px; font-weight: 600;
+    border: none; cursor: pointer; border-radius: var(--radius-xs);
+    padding: 0 16px; height: 36px;
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: all var(--ease); white-space: nowrap;
+  }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+  .btn-primary { background: var(--accent); color: #fff; box-shadow: 0 4px 14px var(--accent-glow); }
+  .btn-primary:not(:disabled):hover { background: var(--accent2); transform: translateY(-1px); }
+  .btn-ghost { background: var(--surface); color: var(--text2); border: 1px solid var(--border2); }
+  .btn-ghost:not(:disabled):hover { background: var(--surface2); color: var(--text); }
+  .btn-danger { background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(224,108,108,0.2); }
+  .btn-danger:not(:disabled):hover { background: rgba(224,108,108,0.18); }
+  .btn-sm { height: 30px; padding: 0 12px; font-size: 12px; }
+  .btn-icon { width: 30px; height: 30px; padding: 0; justify-content: center; }
+  .btn-icon svg { width: 14px; height: 14px; }
+
+  /* ── LAYOUT ── */
+  .layout { display: grid; grid-template-columns: 260px 1fr; min-height: calc(100vh - 60px); }
+  .sidebar {
+    border-right: 1px solid var(--border);
+    padding: 24px 16px;
+    position: sticky; top: 60px; height: calc(100vh - 60px);
+    overflow-y: auto;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .nav-section { font-size: 10px; font-weight: 700; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; padding: 12px 10px 6px; margin-top: 8px; }
+  .nav-section:first-child { margin-top: 0; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 10px; border-radius: var(--radius-xs);
+    cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text2);
+    transition: all var(--ease); border: none; background: none;
+    font-family: var(--font); width: 100%; text-align: left;
+  }
+  .nav-item:hover { background: var(--bg3); color: var(--text); }
+  .nav-item.active { background: rgba(123,94,167,0.15); color: var(--accent2); }
+  .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .nav-item .nav-badge {
+    margin-left: auto; font-size: 10px; font-weight: 700;
+    background: var(--bg3); color: var(--text3);
+    border-radius: 10px; padding: 1px 7px;
+  }
+  .nav-item.active .nav-badge { background: rgba(123,94,167,0.2); color: var(--accent2); }
+
+  .content { padding: 32px 36px; max-width: 760px; }
+
+  /* ── SETUP SCREEN ── */
+  .setup-screen {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; min-height: calc(100vh - 60px);
+    padding: 40px 20px; text-align: center;
+  }
+  .setup-card {
+    background: var(--bg2); border: 1px solid var(--border2);
+    border-radius: 20px; padding: 40px; max-width: 480px; width: 100%;
+  }
+  .setup-icon {
+    width: 64px; height: 64px; background: rgba(123,94,167,0.15);
+    border-radius: 18px; display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 20px;
+  }
+  .setup-icon svg { width: 32px; height: 32px; color: var(--accent2); }
+  .setup-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+  .setup-sub { font-size: 13px; color: var(--text2); line-height: 1.7; margin-bottom: 28px; }
+  .setup-steps {
+    background: var(--bg3); border-radius: var(--radius-sm);
+    padding: 16px; margin-bottom: 24px; text-align: left;
+  }
+  .setup-step { display: flex; gap: 12px; padding: 6px 0; font-size: 13px; color: var(--text2); align-items: flex-start; }
+  .setup-step-num {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--accent); color: #fff;
+    font-size: 10px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;
+  }
+  .setup-step a { color: var(--accent2); text-decoration: none; }
+  .setup-step a:hover { text-decoration: underline; }
+
+  /* ── SECTION HEADERS ── */
+  .sec-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .sec-sub { font-size: 13px; color: var(--text2); margin-bottom: 28px; }
+  .divider { height: 1px; background: var(--border); margin: 28px 0; }
+
+  /* ── FORM ELEMENTS ── */
+  .field { margin-bottom: 20px; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .label { font-size: 11px; font-weight: 700; color: var(--text3); letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 7px; display: block; }
+  .label span { font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--text3); opacity: 0.6; margin-left: 4px; }
+  .input, .textarea {
+    width: 100%; background: var(--bg3); border: 1px solid var(--border2);
+    border-radius: var(--radius-xs); padding: 10px 14px;
+    font-family: var(--font); font-size: 13px; color: var(--text);
+    outline: none; transition: border-color var(--ease);
+  }
+  .input::placeholder, .textarea::placeholder { color: var(--text3); }
+  .input:focus, .textarea:focus { border-color: var(--accent); }
+  .textarea { resize: vertical; min-height: 90px; line-height: 1.6; }
+  .input-hint { font-size: 11px; color: var(--text3); margin-top: 5px; }
+
+  /* ── IMAGE UPLOAD ── */
+  .img-upload { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+  .img-preview {
+    flex-shrink: 0; background: var(--bg3);
+    border: 1px solid var(--border2);
+    overflow: hidden; position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .img-preview.round { border-radius: 50%; width: 80px; height: 80px; }
+  .img-preview.square { border-radius: var(--radius-sm); width: 80px; height: 80px; }
+  .img-preview img { width: 100%; height: 100%; object-fit: cover; display: none; }
+  .img-preview img.loaded { display: block; }
+  .img-preview-ph { font-size: 28px; font-weight: 700; color: var(--text3); }
+  .img-preview svg { width: 24px; height: 24px; color: var(--text3); }
+  .img-upload-info { flex: 1; }
+  .img-upload-info p { font-size: 12px; color: var(--text2); margin-top: 4px; }
+  .file-input { display: none; }
+
+  /* ── SOCIAL LINKS ── */
+  .social-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .social-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--bg3); display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid var(--border); }
+  .social-icon svg { width: 15px; height: 15px; color: var(--text2); }
+  .social-label { width: 90px; font-size: 12px; font-weight: 600; color: var(--text2); flex-shrink: 0; }
+
+  /* ── TRACKS ── */
+  .tracks-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .tracks-label { font-size: 13px; font-weight: 700; color: var(--text); }
+  .track-item {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 14px 16px;
+    margin-bottom: 10px; position: relative;
+  }
+  .track-item-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .track-num-badge {
+    width: 24px; height: 24px; border-radius: 6px;
+    background: var(--bg3); color: var(--text3);
+    font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .track-title-display { font-size: 13px; font-weight: 600; color: var(--text); flex: 1; }
+  .track-fields { display: grid; grid-template-columns: 1fr 120px; gap: 10px; }
+  .track-uploading {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--warning); margin-top: 8px;
+  }
+  .track-uploaded {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--green); margin-top: 8px;
+  }
+  .track-uploaded svg, .track-uploading svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+  /* ── SHARE SECTION ── */
+  .share-card {
+    background: var(--bg2); border: 1px solid var(--border2);
+    border-radius: var(--radius); padding: 20px; margin-bottom: 16px;
+  }
+  .share-label { font-size: 11px; font-weight: 700; color: var(--text3); letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 10px; }
+  .share-url {
+    background: var(--bg3); border: 1px solid var(--border2);
+    border-radius: var(--radius-xs); padding: 10px 14px;
+    font-family: monospace; font-size: 12px; color: var(--accent2);
+    word-break: break-all; margin-bottom: 10px;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  }
+  .share-url span { flex: 1; }
+  .qr-placeholder {
+    width: 120px; height: 120px; background: var(--bg3);
+    border: 1px solid var(--border2); border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text3); font-size: 11px; text-align: center; padding: 12px;
+  }
+
+  /* ── ALERTS ── */
+  .alert {
+    border-radius: var(--radius-sm); padding: 12px 16px;
+    font-size: 13px; margin-bottom: 20px;
+    display: flex; align-items: flex-start; gap: 10px;
+  }
+  .alert svg { width: 16px; height: 16px; flex-shrink: 0; margin-top: 1px; }
+  .alert-success { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
+  .alert-warning { background: var(--warning-bg); color: var(--warning); border: 1px solid rgba(224,168,74,0.25); }
+  .alert-danger { background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(224,108,108,0.2); }
+  .alert { display: none; }
+  .alert.on { display: flex; }
+
+  /* ── SPINNER ── */
+  .spin { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.2); border-top-color: currentColor; border-radius: 50%; animation: spin .7s linear infinite; display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── TOKEN BADGE ── */
+  .token-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 600;
+    background: var(--green-bg); color: var(--green);
+    border: 1px solid var(--green-border);
+    border-radius: 20px; padding: 3px 10px;
+  }
+  .token-badge svg { width: 10px; height: 10px; }
+  .token-badge.off { background: var(--danger-bg); color: var(--danger); border-color: rgba(224,108,108,0.2); }
+
+  /* ── PROGRESS BAR ── */
+  .progress-wrap { background: var(--bg3); border-radius: 4px; height: 6px; overflow: hidden; margin-top: 6px; }
+  .progress-bar { height: 100%; background: var(--accent); border-radius: 4px; width: 0%; transition: width .3s; }
+
+  @media(max-width: 768px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { position: static; height: auto; flex-direction: row; flex-wrap: wrap; padding: 12px; border-right: none; border-bottom: 1px solid var(--border); }
+    .nav-section { display: none; }
+    .content { padding: 20px 16px; }
+    .field-row { grid-template-columns: 1fr; }
+    .track-fields { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg>
+    </div>
+    Unmuted
+    <span class="logo-sub">Artist Dashboard</span>
+  </div>
+  <div class="topbar-right">
+    <span class="save-status" id="save-status"></span>
+    <div id="token-badge-wrap"></div>
+    <button class="btn btn-primary" id="save-btn" onclick="saveAll()" disabled>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Save changes
+    </button>
+  </div>
+</header>
+
+<!-- SETUP SCREEN -->
+<div id="setup-screen" class="setup-screen" style="display:none">
+  <div class="setup-card">
+    <div class="setup-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    </div>
+    <div class="setup-title">Connect your GitHub</div>
+    <p class="setup-sub">To save changes to your artist page, you need a GitHub Personal Access Token. It's free and takes about 60 seconds to create.</p>
+    <div class="setup-steps">
+      <div class="setup-step">
+        <div class="setup-step-num">1</div>
+        <div>Go to <a href="https://github.com/settings/tokens/new" target="_blank">github.com/settings/tokens/new</a></div>
+      </div>
+      <div class="setup-step">
+        <div class="setup-step-num">2</div>
+        <div>Give it a name like "Unmuted" and set expiration to <strong>No expiration</strong></div>
+      </div>
+      <div class="setup-step">
+        <div class="setup-step-num">3</div>
+        <div>Under <strong>repo</strong>, tick the checkbox — that's the only permission needed</div>
+      </div>
+      <div class="setup-step">
+        <div class="setup-step-num">4</div>
+        <div>Click <strong>Generate token</strong> and copy the token that appears</div>
+      </div>
+      <div class="setup-step">
+        <div class="setup-step-num">5</div>
+        <div>Paste it below 👇</div>
+      </div>
+    </div>
+    <div class="field">
+      <label class="label">Your GitHub token</label>
+      <input class="input" id="token-input" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+      <div class="input-hint">Stored only in your browser. Never sent anywhere except GitHub.</div>
+    </div>
+    <div class="field">
+      <label class="label">Your GitHub username</label>
+      <input class="input" id="username-input" type="text" placeholder="carloswunsche">
+    </div>
+    <div class="field">
+      <label class="label">Repository name</label>
+      <input class="input" id="repo-input" type="text" placeholder="music" value="music">
+    </div>
+    <div class="alert alert-danger" id="setup-error">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span id="setup-error-msg"></span>
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="connectGitHub()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+      Connect GitHub
+    </button>
+  </div>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div class="layout" id="main-layout" style="display:none">
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="nav-section">Profile</div>
+    <button class="nav-item active" id="nav-profile" onclick="showSection('profile')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Profile
+    </button>
+    <button class="nav-item" id="nav-links" onclick="showSection('links')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+      Social links
+    </button>
+    <div class="nav-section">Music</div>
+    <button class="nav-item" id="nav-singles" onclick="showSection('singles')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+      Singles
+      <span class="nav-badge" id="singles-count">0</span>
+    </button>
+    <div class="nav-section">Share</div>
+    <button class="nav-item" id="nav-share" onclick="showSection('share')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      Share
+    </button>
+    <div class="nav-section">Settings</div>
+    <button class="nav-item" id="nav-settings" onclick="showSection('settings')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+      GitHub settings
+    </button>
+  </nav>
+
+  <!-- CONTENT -->
+  <main class="content">
+
+    <!-- PROFILE SECTION -->
+    <div id="section-profile">
+      <div class="sec-title">Your profile</div>
+      <p class="sec-sub">This is what listeners see when they add you on Unmuted.</p>
+
+      <div class="img-upload">
+        <div class="img-preview round" id="avatar-preview">
+          <img id="avatar-img" src="" alt="">
+          <div class="img-preview-ph" id="avatar-ph">?</div>
+        </div>
+        <div class="img-upload-info">
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('avatar-file').click()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload photo
+          </button>
+          <input type="file" id="avatar-file" class="file-input" accept="image/*" onchange="handleImageUpload('avatar', this)">
+          <p>Square image, JPG or PNG. At least 400×400px.</p>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field" style="margin-bottom:0">
+          <label class="label">Artist name</label>
+          <input class="input" id="f-name" type="text" placeholder="Your name or artist name" oninput="markDirty()">
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label class="label">Location <span>(optional)</span></label>
+          <input class="input" id="f-location" type="text" placeholder="e.g. Miami, FL" oninput="markDirty()">
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="field">
+        <label class="label">Bio</label>
+        <textarea class="textarea" id="f-bio" placeholder="Tell listeners a bit about yourself and your music..." oninput="markDirty()"></textarea>
+      </div>
+    </div>
+
+    <!-- SOCIAL LINKS SECTION -->
+    <div id="section-links" style="display:none">
+      <div class="sec-title">Social links</div>
+      <p class="sec-sub">Add your profiles so listeners can follow you everywhere.</p>
+
+      <div class="social-row">
+        <div class="social-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg></div>
+        <span class="social-label">Instagram</span>
+        <input class="input" id="l-instagram" type="text" placeholder="your_handle" oninput="markDirty()">
+      </div>
+      <div class="social-row">
+        <div class="social-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></div>
+        <span class="social-label">YouTube</span>
+        <input class="input" id="l-youtube" type="text" placeholder="@yourchannel" oninput="markDirty()">
+      </div>
+      <div class="social-row">
+        <div class="social-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.56 8.87V17h-1.7V8.87H7.31V7.33h6.79v1.54h-2.54zM20.15 17l-1.92-5.11L16.3 17h-1.81l2.87-9.67h1.74L22 17h-1.85zM7.95 7.33H6.25V17h1.7V7.33zm-4.44 0H1.85V17h1.66V7.33z"/></svg></div>
+        <span class="social-label">TikTok</span>
+        <input class="input" id="l-tiktok" type="text" placeholder="@yourhandle" oninput="markDirty()">
+      </div>
+      <div class="social-row">
+        <div class="social-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg></div>
+        <span class="social-label">Spotify</span>
+        <input class="input" id="l-spotify" type="text" placeholder="Artist page URL" oninput="markDirty()">
+      </div>
+      <div class="social-row">
+        <div class="social-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M1.175 12.225C.887 12.225 0 12.68 0 13.635c0 .954.887 1.41 1.175 1.41H12c.287 0 1.175-.456 1.175-1.41 0-.955-.888-1.41-1.175-1.41H1.175zm0-4.85C.887 7.375 0 7.83 0 8.785c0 .954.887 1.41 1.175 1.41H19c.287 0 1.175-.456 1.175-1.41 0-.955-.888-1.41-1.175-1.41H1.175zm0-4.85C.887 2.525 0 2.98 0 3.935c0 .954.887 1.41 1.175 1.41H22.5c.287 0 1.175-.456 1.175-1.41 0-.955-.888-1.41-1.175-1.41H1.175zM0 18.485c0-.955.887-1.41 1.175-1.41H8c.287 0 1.175.455 1.175 1.41 0 .954-.888 1.41-1.175 1.41H1.175C.887 19.895 0 19.44 0 18.485z"/></svg></div>
+        <span class="social-label">SoundCloud</span>
+        <input class="input" id="l-soundcloud" type="text" placeholder="soundcloud.com/you" oninput="markDirty()">
+      </div>
+      <div class="social-row">
+        <div class="social-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm0 2c5.514 0 10 4.486 10 10s-4.486 10-10 10-10-4.486-10-10 4.486-10 10-10zm0 3c-3.866 0-7 3.134-7 7s3.134 7 7 7 7-3.134 7-7-3.134-7-7-7zm0 2c2.761 0 5 2.239 5 5s-2.239 5-5 5-5-2.239-5-5 2.239-5 5-5zm0 2c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3z"/></svg></div>
+        <span class="social-label">Bandcamp</span>
+        <input class="input" id="l-bandcamp" type="text" placeholder="you.bandcamp.com" oninput="markDirty()">
+      </div>
+    </div>
+
+    <!-- SINGLES SECTION -->
+    <div id="section-singles" style="display:none">
+      <div class="sec-title">Singles</div>
+      <p class="sec-sub">Upload your tracks and fill in the details. Files go directly to your GitHub repo.</p>
+
+      <div class="img-upload" style="margin-bottom:24px">
+        <div class="img-preview square" id="singles-cover-preview">
+          <img id="singles-cover-img" src="" alt="">
+          <div class="img-preview-ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="28" height="28"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="12" cy="12" r="3"/></svg></div>
+        </div>
+        <div class="img-upload-info">
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('singles-cover-file').click()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload cover art
+          </button>
+          <input type="file" id="singles-cover-file" class="file-input" accept="image/*" onchange="handleImageUpload('singles-cover', this)">
+          <p>Square image, JPG or PNG. At least 500×500px recommended.</p>
+        </div>
+      </div>
+
+      <div class="tracks-header">
+        <span class="tracks-label">Tracks</span>
+        <button class="btn btn-ghost btn-sm" onclick="addTrack()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add track
+        </button>
+      </div>
+
+      <div id="tracks-list"></div>
+
+      <div class="alert alert-warning" id="mp3-warning">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>Use MP3 format for best compatibility. WAV files are very large and may not stream well.</span>
+      </div>
+    </div>
+
+    <!-- SHARE SECTION -->
+    <div id="section-share" style="display:none">
+      <div class="sec-title">Share your page</div>
+      <p class="sec-sub">These are the links you share with listeners so they can add you on Unmuted.</p>
+
+      <div class="share-card">
+        <div class="share-label">Your manifest URL</div>
+        <div class="share-url">
+          <span id="share-manifest-url">—</span>
+          <button class="btn btn-ghost btn-sm btn-icon" onclick="copyUrl('manifest')" title="Copy">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+        </div>
+        <div class="input-hint">Open this in a browser — if you see your artist info as text, you're live ✅</div>
+      </div>
+
+      <div class="share-card">
+        <div class="share-label">Unmuted deep link — put this in your Instagram bio</div>
+        <div class="share-url">
+          <span id="share-deep-url">—</span>
+          <button class="btn btn-ghost btn-sm btn-icon" onclick="copyUrl('deep')" title="Copy">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+        </div>
+        <div class="input-hint">When someone taps this link, Unmuted opens and asks if they want to add you.</div>
+      </div>
+    </div>
+
+    <!-- SETTINGS SECTION -->
+    <div id="section-settings" style="display:none">
+      <div class="sec-title">GitHub settings</div>
+      <p class="sec-sub">Update your connection details or disconnect.</p>
+      <div class="field">
+        <label class="label">GitHub username</label>
+        <input class="input" id="s-username" type="text" readonly>
+      </div>
+      <div class="field">
+        <label class="label">Repository name</label>
+        <input class="input" id="s-repo" type="text" readonly>
+      </div>
+      <div class="field">
+        <label class="label">Token</label>
+        <input class="input" id="s-token" type="password" readonly value="••••••••••••••••••••">
+      </div>
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <button class="btn btn-danger" onclick="disconnect()">Disconnect GitHub</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- TOAST -->
+<div id="toast" style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--surface2);border:1px solid var(--border2);border-radius:20px;padding:9px 18px;font-size:13px;font-weight:500;color:var(--text);z-index:400;opacity:0;pointer-events:none;transition:all .22s;white-space:nowrap;"></div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────
+let GH = {
+  token: localStorage.getItem('un_dash_token') || '',
+  username: localStorage.getItem('un_dash_user') || '',
+  repo: localStorage.getItem('un_dash_repo') || 'music'
+};
+
+let artistData = null;
+let singlesData = null;
+let dirty = false;
+let pendingUploads = {}; // key -> { b64, sha, path }
+let trackShas = {}; // filename -> sha (for existing tracks)
+
+// ── BOOT ───────────────────────────────────────────────────────
+async function boot() {
+  if (GH.token && GH.username) {
+    showMain();
+    await loadData();
+  } else {
+    showSetup();
+  }
+}
+
+function showSetup() {
+  document.getElementById('setup-screen').style.display = 'flex';
+  document.getElementById('main-layout').style.display = 'none';
+}
+
+function showMain() {
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('main-layout').style.display = 'grid';
+  updateTokenBadge(true);
+  document.getElementById('save-btn').disabled = false;
+  document.getElementById('s-username').value = GH.username;
+  document.getElementById('s-repo').value = GH.repo;
+  updateShareUrls();
+}
+
+// ── GITHUB API ─────────────────────────────────────────────────
+async function ghGet(path) {
+  const r = await fetch(`https://api.github.com/repos/${GH.username}/${GH.repo}/contents/${path}`, {
+    headers: { Authorization: `token ${GH.token}`, Accept: 'application/vnd.github.v3+json' }
+  });
+  if (!r.ok) throw new Error(`GitHub error ${r.status}: ${await r.text()}`);
+  return r.json();
+}
+
+async function ghPut(path, content, sha, message) {
+  const body = { message, content: btoa(unescape(encodeURIComponent(content))) };
+  if (sha) body.sha = sha;
+  const r = await fetch(`https://api.github.com/repos/${GH.username}/${GH.repo}/contents/${path}`, {
+    method: 'PUT',
+    headers: { Authorization: `token ${GH.token}`, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) throw new Error(`GitHub error ${r.status}: ${await r.text()}`);
+  return r.json();
+}
+
+async function ghPutBinary(path, b64content, sha, message) {
+  const body = { message, content: b64content };
+  if (sha) body.sha = sha;
+  const r = await fetch(`https://api.github.com/repos/${GH.username}/${GH.repo}/contents/${path}`, {
+    method: 'PUT',
+    headers: { Authorization: `token ${GH.token}`, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) throw new Error(`GitHub error ${r.status}: ${await r.text()}`);
+  return r.json();
+}
+
+async function ghGetSha(path) {
+  try { const d = await ghGet(path); return d.sha; }
+  catch { return null; }
+}
+
+// ── CONNECT ────────────────────────────────────────────────────
+async function connectGitHub() {
+  const token = document.getElementById('token-input').value.trim();
+  const username = document.getElementById('username-input').value.trim();
+  const repo = document.getElementById('repo-input').value.trim() || 'music';
+  const errEl = document.getElementById('setup-error');
+  const errMsg = document.getElementById('setup-error-msg');
+
+  if (!token || !username) {
+    errMsg.textContent = 'Please fill in both your token and username.';
+    errEl.classList.add('on'); return;
+  }
+  errEl.classList.remove('on');
+
+  try {
+    // Test the token by fetching the repo
+    const r = await fetch(`https://api.github.com/repos/${username}/${repo}`, {
+      headers: { Authorization: `token ${token}` }
+    });
+    if (r.status === 401) throw new Error('Token is invalid. Make sure you copied it correctly.');
+    if (r.status === 404) throw new Error(`Repo "${username}/${repo}" not found. Check the name and make sure it's public.`);
+    if (!r.ok) throw new Error(`GitHub returned error ${r.status}.`);
+
+    GH = { token, username, repo };
+    localStorage.setItem('un_dash_token', token);
+    localStorage.setItem('un_dash_user', username);
+    localStorage.setItem('un_dash_repo', repo);
+
+    showMain();
+    await loadData();
+  } catch(e) {
+    errMsg.textContent = e.message;
+    errEl.classList.add('on');
+  }
+}
+
+// ── LOAD DATA ──────────────────────────────────────────────────
+async function loadData() {
+  setSaveStatus('loading…');
+  try {
+    // Load artist.json
+    const artistFile = await ghGet('artist.json');
+    artistData = { ...JSON.parse(atob(artistFile.content.replace(/\n/g,''))), _sha: artistFile.sha };
+    populateProfile(artistData);
+
+    // Load singles/singles.json
+    try {
+      const singlesFile = await ghGet('singles/singles.json');
+      singlesData = { ...JSON.parse(atob(singlesFile.content.replace(/\n/g,''))), _sha: singlesFile.sha };
+      populateSingles(singlesData);
+    } catch {
+      singlesData = { title: 'Singles', year: new Date().getFullYear(), tracks: [], _sha: null };
+      populateSingles(singlesData);
+    }
+
+    // Load avatar preview
+    try {
+      const avatarFile = await ghGet('avatar.jpg');
+      showImagePreview('avatar', `data:image/jpeg;base64,${avatarFile.content.replace(/\n/g,'')}`);
+      pendingUploads['avatar'] = { sha: avatarFile.sha };
+    } catch {}
+
+    // Load singles cover preview
+    try {
+      const coverFile = await ghGet('singles/cover.jpg');
+      showImagePreview('singles-cover', `data:image/jpeg;base64,${coverFile.content.replace(/\n/g,'')}`);
+      pendingUploads['singles-cover'] = { sha: coverFile.sha };
+    } catch {}
+
+    setSaveStatus('');
+    dirty = false;
+  } catch(e) {
+    setSaveStatus('');
+    toast('Error loading data: ' + e.message, 'danger');
+  }
+}
+
+function populateProfile(d) {
+  document.getElementById('f-name').value = d.name || '';
+  document.getElementById('f-bio').value = d.bio || '';
+  document.getElementById('f-location').value = d.location || '';
+  document.getElementById('avatar-ph').textContent = (d.name || '?').charAt(0);
+
+  const links = d.links || {};
+  document.getElementById('l-instagram').value = extractHandle(links.instagram || '');
+  document.getElementById('l-youtube').value = extractHandle(links.youtube || '');
+  document.getElementById('l-tiktok').value = extractHandle(links.tiktok || '');
+  document.getElementById('l-spotify').value = links.spotify || '';
+  document.getElementById('l-soundcloud').value = links.soundcloud || '';
+  document.getElementById('l-bandcamp').value = links.bandcamp || '';
+}
+
+function populateSingles(d) {
+  const list = document.getElementById('tracks-list');
+  list.innerHTML = '';
+  (d.tracks || []).forEach((t, i) => addTrackRow(t, i));
+  updateSinglesCount();
+}
+
+function extractHandle(url) {
+  if (!url) return '';
+  return url.replace(/https?:\/\/(www\.)?(instagram|youtube|tiktok|soundcloud|bandcamp)\.com\//,'').replace(/^@/,'');
+}
+
+// ── PROFILE FORM ───────────────────────────────────────────────
+function getProfileData() {
+  const links = {};
+  const ig = document.getElementById('l-instagram').value.trim();
+  const yt = document.getElementById('l-youtube').value.trim();
+  const tt = document.getElementById('l-tiktok').value.trim();
+  const sp = document.getElementById('l-spotify').value.trim();
+  const sc = document.getElementById('l-soundcloud').value.trim();
+  const bc = document.getElementById('l-bandcamp').value.trim();
+  if (ig) links.instagram = ig.startsWith('http') ? ig : `https://instagram.com/${ig}`;
+  if (yt) links.youtube = yt.startsWith('http') ? yt : `https://youtube.com/@${yt.replace('@','')}`;
+  if (tt) links.tiktok = tt.startsWith('http') ? tt : `https://tiktok.com/@${tt.replace('@','')}`;
+  if (sp) links.spotify = sp;
+  if (sc) links.soundcloud = sc.startsWith('http') ? sc : `https://soundcloud.com/${sc}`;
+  if (bc) links.bandcamp = bc.startsWith('http') ? bc : `https://${bc}`;
+
+  return {
+    schema: 'unmuted/v1',
+    name: document.getElementById('f-name').value.trim(),
+    bio: document.getElementById('f-bio').value.trim(),
+    location: document.getElementById('f-location').value.trim(),
+    avatar: 'avatar.jpg',
+    links,
+    albums: ['singles/singles.json']
+  };
+}
+
+// ── TRACKS ─────────────────────────────────────────────────────
+function addTrack() {
+  const idx = document.getElementById('tracks-list').children.length;
+  addTrackRow({ title: '', src: '', duration: 0 }, idx);
+  updateSinglesCount();
+  markDirty();
+}
+
+function addTrackRow(track, idx) {
+  const div = document.createElement('div');
+  div.className = 'track-item';
+  div.dataset.idx = idx;
+
+  const hasFile = track.src && track.src.length > 0;
+  const mins = track.duration ? Math.floor(track.duration / 60) : 0;
+  const secs = track.duration ? track.duration % 60 : 0;
+  const durStr = track.duration ? `${mins}:${String(secs).padStart(2,'0')}` : '';
+
+  div.innerHTML = `
+    <div class="track-item-header">
+      <div class="track-num-badge">${idx + 1}</div>
+      <div class="track-title-display" id="track-title-display-${idx}">${track.title || 'New track'}</div>
+      <button class="btn btn-danger btn-sm btn-icon" onclick="removeTrack(${idx})" title="Remove">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="track-fields">
+      <div>
+        <label class="label">Track title</label>
+        <input class="input" type="text" id="track-title-${idx}" value="${esc(track.title)}"
+          placeholder="Song name"
+          oninput="document.getElementById('track-title-display-${idx}').textContent=this.value||'New track';markDirty()">
+      </div>
+      <div>
+        <label class="label">Duration <span>(m:ss)</span></label>
+        <input class="input" type="text" id="track-dur-${idx}" value="${durStr}"
+          placeholder="3:45" oninput="markDirty()">
+      </div>
+    </div>
+    <div>
+      <label class="label">Audio file</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('track-file-${idx}').click()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          ${hasFile ? 'Replace MP3' : 'Upload MP3'}
+        </button>
+        <span id="track-filename-${idx}" style="font-size:12px;color:var(--text3)">${hasFile ? track.src : 'No file yet'}</span>
+      </div>
+      <input type="file" id="track-file-${idx}" class="file-input" accept=".mp3,audio/mpeg" onchange="handleTrackUpload(${idx}, this)">
+      <div id="track-status-${idx}"></div>
+      <div class="progress-wrap" id="track-progress-wrap-${idx}" style="display:none"><div class="progress-bar" id="track-progress-${idx}"></div></div>
+    </div>
+    <input type="hidden" id="track-src-${idx}" value="${esc(track.src)}">`;
+
+  document.getElementById('tracks-list').appendChild(div);
+}
+
+function removeTrack(idx) {
+  const item = document.querySelector(`.track-item[data-idx="${idx}"]`);
+  if (item) item.remove();
+  renumberTracks();
+  updateSinglesCount();
+  markDirty();
+}
+
+function renumberTracks() {
+  document.querySelectorAll('.track-item').forEach((item, i) => {
+    item.dataset.idx = i;
+    const badge = item.querySelector('.track-num-badge');
+    if (badge) badge.textContent = i + 1;
+  });
+}
+
+function updateSinglesCount() {
+  const count = document.getElementById('tracks-list').children.length;
+  document.getElementById('singles-count').textContent = count;
+}
+
+function getSinglesData() {
+  const tracks = [];
+  document.querySelectorAll('.track-item').forEach((item) => {
+    const idx = item.dataset.idx;
+    const title = document.getElementById(`track-title-${idx}`)?.value.trim() || '';
+    const durStr = document.getElementById(`track-dur-${idx}`)?.value.trim() || '';
+    const src = document.getElementById(`track-src-${idx}`)?.value.trim() || '';
+    const duration = parseDuration(durStr);
+    if (title || src) tracks.push({ title, src, duration });
+  });
+  return {
+    title: 'Singles',
+    year: new Date().getFullYear(),
+    cover: 'cover.jpg',
+    tracks
+  };
+}
+
+function parseDuration(str) {
+  if (!str) return 0;
+  const parts = str.split(':');
+  if (parts.length === 2) return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+  return parseInt(str) || 0;
+}
+
+// ── IMAGE UPLOADS ──────────────────────────────────────────────
+function handleImageUpload(key, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const b64 = e.target.result.split(',')[1];
+    pendingUploads[key] = { b64, sha: pendingUploads[key]?.sha || null, file };
+    showImagePreview(key, e.target.result);
+    markDirty();
+  };
+  reader.readAsDataURL(file);
+}
+
+function showImagePreview(key, src) {
+  const imgId = key === 'avatar' ? 'avatar-img' : 'singles-cover-img';
+  const phId = key === 'avatar' ? 'avatar-ph' : null;
+  const img = document.getElementById(imgId);
+  if (img) {
+    img.src = src;
+    img.classList.add('loaded');
+    if (phId) document.getElementById(phId).style.display = 'none';
+  }
+}
+
+// ── TRACK UPLOAD ───────────────────────────────────────────────
+function handleTrackUpload(idx, input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  if (!file.name.toLowerCase().endsWith('.mp3')) {
+    toast('Please use MP3 files for best compatibility', 'warning');
+    return;
+  }
+
+  const filename = file.name.toLowerCase().replace(/\s+/g, '-');
+  document.getElementById(`track-filename-${idx}`).textContent = filename;
+  document.getElementById(`track-src-${idx}`).value = filename;
+
+  // Auto-fill title from filename if empty
+  const titleInput = document.getElementById(`track-title-${idx}`);
+  if (!titleInput.value) {
+    const autoTitle = filename.replace('.mp3','').replace(/-/g,' ').replace(/^\d+\s*/,'');
+    titleInput.value = autoTitle.charAt(0).toUpperCase() + autoTitle.slice(1);
+    document.getElementById(`track-title-display-${idx}`).textContent = titleInput.value;
+  }
+
+  const statusEl = document.getElementById(`track-status-${idx}`);
+  statusEl.innerHTML = `<div class="track-uploading"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>Ready to upload — will save when you click Save changes</div>`;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const b64 = e.target.result.split(',')[1];
+    pendingUploads[`track-${idx}`] = { b64, filename, sha: null };
+    markDirty();
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── SAVE ALL ───────────────────────────────────────────────────
+async function saveAll() {
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true;
+  btn.innerHTML = `<div class="spin"></div> Saving…`;
+  setSaveStatus('saving', 'Saving…');
+
+  try {
+    // 1. Upload pending images
+    if (pendingUploads['avatar']?.b64) {
+      const sha = await ghGetSha('avatar.jpg');
+      await ghPutBinary('avatar.jpg', pendingUploads['avatar'].b64, sha, 'Update avatar');
+      pendingUploads['avatar'].b64 = null;
+    }
+    if (pendingUploads['singles-cover']?.b64) {
+      const sha = await ghGetSha('singles/cover.jpg');
+      await ghPutBinary('singles/cover.jpg', pendingUploads['singles-cover'].b64, sha, 'Update singles cover');
+      pendingUploads['singles-cover'].b64 = null;
+    }
+
+    // 2. Upload pending track files
+    for (const [key, val] of Object.entries(pendingUploads)) {
+      if (!key.startsWith('track-') || !val.b64) continue;
+      const idx = key.replace('track-', '');
+      const path = `singles/${val.filename}`;
+      const sha = await ghGetSha(path);
+      await ghPutBinary(path, val.b64, sha, `Upload ${val.filename}`);
+
+      const statusEl = document.getElementById(`track-status-${idx}`);
+      if (statusEl) statusEl.innerHTML = `<div class="track-uploaded"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>${val.filename} uploaded</div>`;
+      pendingUploads[key].b64 = null;
+    }
+
+    // 3. Save artist.json
+    const newArtist = getProfileData();
+    const artistJson = JSON.stringify(newArtist, null, 2);
+    const artistSha = artistData?._sha || await ghGetSha('artist.json');
+    const artistResult = await ghPut('artist.json', artistJson, artistSha, 'Update artist profile');
+    artistData = { ...newArtist, _sha: artistResult.content.sha };
+
+    // 4. Save singles/singles.json
+    const newSingles = getSinglesData();
+    const singlesJson = JSON.stringify(newSingles, null, 2);
+    const singlesSha = singlesData?._sha || await ghGetSha('singles/singles.json');
+    const singlesResult = await ghPut('singles/singles.json', singlesJson, singlesSha, 'Update singles');
+    singlesData = { ...newSingles, _sha: singlesResult.content.sha };
+
+    dirty = false;
+    setSaveStatus('saved', '✓ Saved');
+    setTimeout(() => setSaveStatus('', ''), 3000);
+    toast('All changes saved! 🎉 Live in ~2 minutes.');
+
+  } catch(e) {
+    toast('Save failed: ' + e.message, 'danger');
+    setSaveStatus('', '');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 0 2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save changes`;
+  }
+}
+
+// ── UI HELPERS ─────────────────────────────────────────────────
+function showSection(name) {
+  ['profile','links','singles','share','settings'].forEach(s => {
+    document.getElementById(`section-${s}`).style.display = s === name ? 'block' : 'none';
+    document.getElementById(`nav-${s}`).classList.toggle('active', s === name);
+  });
+}
+
+function markDirty() { dirty = true; }
+
+function setSaveStatus(type, msg) {
+  const el = document.getElementById('save-status');
+  el.textContent = msg || '';
+  el.className = 'save-status' + (type ? ' ' + type : '');
+}
+
+function updateTokenBadge(connected) {
+  document.getElementById('token-badge-wrap').innerHTML = connected
+    ? `<div class="token-badge"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a5 5 0 1 0 0 10A5 5 0 0 0 12 2zm0 8a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm9 11v-1a7 7 0 0 0-14 0v1h2v-1a5 5 0 0 1 10 0v1h2z"/></svg>Connected</div>`
+    : `<div class="token-badge off">Not connected</div>`;
+}
+
+function updateShareUrls() {
+  const base = `https://${GH.username}.github.io/${GH.repo}`;
+  const manifest = `${base}/artist.json`;
+  const deep = `https://unmuted.app/add#${manifest}`;
+  document.getElementById('share-manifest-url').textContent = manifest;
+  document.getElementById('share-deep-url').textContent = deep;
+}
+
+function copyUrl(type) {
+  const el = document.getElementById(type === 'manifest' ? 'share-manifest-url' : 'share-deep-url');
+  navigator.clipboard.writeText(el.textContent).then(() => toast('Copied to clipboard!'));
+}
+
+function disconnect() {
+  if (!confirm('Disconnect GitHub? You\'ll need to enter your token again.')) return;
+  localStorage.removeItem('un_dash_token');
+  localStorage.removeItem('un_dash_user');
+  localStorage.removeItem('un_dash_repo');
+  GH = { token: '', username: '', repo: 'music' };
+  showSetup();
+}
+
+function toast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.color = type === 'danger' ? 'var(--danger)' : type === 'warning' ? 'var(--warning)' : 'var(--text)';
+  t.style.opacity = '1'; t.style.transform = 'translateX(-50%) translateY(0)';
+  setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(-50%) translateY(10px)'; }, 3200);
+}
+
+function esc(s) { return s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') : ''; }
+
+boot();
+</script>
+</body>
+</html>
