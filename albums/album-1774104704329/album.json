@@ -8,6 +8,12 @@
       "title": "Old and new",
       "src": "old-and-new-wip-001.mp3",
       "duration": 228
+    },
+    {
+      "title": "This Time",
+      "src": "singles/this-time.mp3",
+      "duration": 230,
+      "fromSingle": true
     }
   ]
 }
