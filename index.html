@@ -1184,11 +1184,14 @@ function getTrackEl(prefix, relId, idx) {
 
 function queueTrackFile(relId, idx, file, folder, filename) {
   const fullPath = `${folder}/${filename}`;
+  console.log('[queue] relId:', relId, 'idx:', idx, 'fullPath:', fullPath);
   const fnEl = getTrackEl('tfilename', relId, idx);
   const srcEl = document.getElementById(`tsrc-${relId}-${idx}`);
   const stEl = getTrackEl('tstatus', relId, idx);
+  console.log('[queue] fnEl:', !!fnEl, 'srcEl:', !!srcEl, 'stEl:', !!stEl);
   if (fnEl) fnEl.textContent = filename;
   if (srcEl) srcEl.value = filename;
+  console.log('[queue] srcEl value after set:', srcEl?.value);
   if (stEl) stEl.innerHTML = `
     <div class="track-status uploading">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
@@ -1517,6 +1520,7 @@ async function saveAll() {
     }
 
     // 1. Upload pending images
+    console.log('[save] pendingUploads keys:', Object.keys(pendingUploads), Object.entries(pendingUploads).map(([k,v])=>k+':'+!!v.b64));
     for (const [key, val] of Object.entries(pendingUploads)) {
       if (!val.b64) continue;
       const sha = await ghGetSha(val.path);
