@@ -134,7 +134,16 @@
   /* TRACKS */
   .tracks-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
   .tracks-label{font-size:13px;font-weight:700;}
-  .track-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:10px;}
+  .track-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:10px;position:relative;}
+  .track-item.drag-over{border-color:var(--accent);background:rgba(123,94,167,0.08);}
+  .track-item.dragging{opacity:0.4;}
+  .drag-handle{cursor:grab;color:var(--text3);padding:4px;border-radius:4px;display:flex;align-items:center;flex-shrink:0;transition:color var(--ease);}
+  .drag-handle:hover{color:var(--text2);}
+  .drag-handle:active{cursor:grabbing;}
+  .drag-handle svg{width:14px;height:14px;}
+  .playlist-track{display:flex;align-items:center;gap:10px;padding:12px 14px;margin-bottom:8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);}
+  .playlist-track.drag-over{border-color:var(--accent);background:rgba(123,94,167,0.08);}
+  .playlist-track.dragging{opacity:0.4;}
   .track-item-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
   .track-num{width:24px;height:24px;border-radius:6px;background:var(--bg3);color:var(--text3);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
   .track-title-disp{font-size:13px;font-weight:600;flex:1;}
@@ -578,6 +587,8 @@ function renderReleaseSection(id) {
   const content = document.getElementById('main-content');
   if (rel.type === 'playlist') content.innerHTML = playlistHTML(rel);
   else content.innerHTML = albumHTML(rel);
+  // Init drag-and-drop after render
+  setTimeout(() => initDragDrop('tracks-' + id), 50);
 
   // Restore release-level cover (albums/playlists only)
   if (rel.type !== 'singles') {
@@ -749,8 +760,11 @@ function trackRowHTML(relId, idx, track, isSingles=false) {
 
   return `<div class="track-item" id="titem-${relId}-${idx}" data-idx="${idx}">
 
-    <!-- HEADER: number + duration + delete -->
+    <!-- HEADER: drag + number + duration + delete -->
     <div class="track-item-header">
+      <div class="drag-handle" draggable="true" onmousedown="event.stopPropagation()">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 6a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm0 7.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm0 7.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm8-15a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm0 7.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm0 7.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg>
+      </div>
       <div class="track-num">${idx+1}</div>
       ${durDisplay ? `<span class="dur-display" style="font-size:11px;color:var(--text3);margin-left:auto;margin-right:8px;font-variant-numeric:tabular-nums">${durDisplay}</span>` : '<span class="dur-display" style="margin-left:auto;margin-right:8px"></span>'}
       <button class="btn btn-danger btn-sm btn-icon" onclick="removeTrackFromRelease('${relId}',${idx})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
@@ -878,6 +892,7 @@ function addTrackToRelease(relId) {
   const div = document.createElement('div');
   div.innerHTML = trackRowHTML(relId, idx, { title:'', src:'', duration:0 }, rel.type === 'singles');
   document.getElementById(`tracks-${relId}`).appendChild(div.firstElementChild);
+  setTimeout(() => initDragDrop('tracks-' + relId), 50);
   markDirty();
 }
 
@@ -911,6 +926,46 @@ function removeTrackFromRelease(relId, idx) {
   if (el) el.remove();
   renumberReleaseTracks(relId);
   markDirty();
+}
+
+// ── DRAG AND DROP REORDERING ──────────────────────────────────
+let dragSrc = null;
+
+function initDragDrop(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.querySelectorAll('.track-item, .playlist-track').forEach(item => {
+    const handle = item.querySelector('.drag-handle');
+    if (!handle) return;
+    handle.addEventListener('dragstart', e => {
+      dragSrc = item;
+      item.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    handle.addEventListener('dragend', () => {
+      item.classList.remove('dragging');
+      container.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+      dragSrc = null;
+    });
+    item.addEventListener('dragover', e => {
+      e.preventDefault();
+      if (dragSrc && dragSrc !== item) item.classList.add('drag-over');
+    });
+    item.addEventListener('dragleave', () => item.classList.remove('drag-over'));
+    item.addEventListener('drop', e => {
+      e.preventDefault();
+      item.classList.remove('drag-over');
+      if (!dragSrc || dragSrc === item) return;
+      const items = [...container.children];
+      const fromIdx = items.indexOf(dragSrc);
+      const toIdx = items.indexOf(item);
+      if (fromIdx < toIdx) container.insertBefore(dragSrc, item.nextSibling);
+      else container.insertBefore(dragSrc, item);
+      // Renumber
+      container.querySelectorAll('.track-num, .playlist-track-num').forEach((el, i) => { el.textContent = i + 1; });
+      markDirty();
+    });
+  });
 }
 
 function renumberReleaseTracks(relId) {
@@ -1230,6 +1285,9 @@ function playlistHTML(rel) {
 function playlistTrackRow(relId, idx, track, allTracks) {
   const opts = allTracks.map(t => `<option value="${esc(t.src)}" data-dur="${t.duration||0}" ${t.src===track.src?'selected':''}>${esc(t.title)} — ${esc(t.from)}</option>`).join('');
   return `<div class="playlist-track" id="ptitem-${relId}-${idx}">
+    <div class="drag-handle" draggable="true">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 6a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm0 7.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm0 7.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm8-15a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm0 7.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm0 7.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg>
+    </div>
     <div class="playlist-track-num">${idx+1}</div>
     <div class="playlist-track-info" style="flex:1">
       <select class="input" style="height:34px;font-size:12px" onchange="onPlaylistTrackChange('${relId}',${idx},this)">
