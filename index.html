@@ -647,11 +647,11 @@ function albumHTML(rel) {
   const typeClass = isSingles ? 'type-singles' : 'type-album';
   const tracks = (d.tracks||[]).map((t,i) => trackRowHTML(id, i, t, isSingles)).join('');
   return `
-  <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:${isSingles ? '20px' : '6px'}">
     <div class="sec-title" style="margin-bottom:0">${esc(d.title||'Untitled')}</div>
-    <span class="type-badge ${typeClass}">${typeLabel}</span>
+    ${isSingles ? '' : `<span class="type-badge ${typeClass}">${typeLabel}</span>`}
   </div>
-  <p class="sec-sub">${isSingles ? 'Each single has its own cover art and release year.' : 'Edit this release, upload tracks and cover art.'}</p>
+  ${isSingles ? '' : `<p class="sec-sub">Edit this release, upload tracks and cover art.</p>`}
 
   ${isSingles ? '' : `
   <div class="img-upload">
@@ -689,7 +689,7 @@ function albumHTML(rel) {
 
   <div class="divider"></div>
   <div class="tracks-header">
-    <span class="tracks-label">${isSingles ? 'Singles' : 'Tracks'}</span>
+    <span class="tracks-label">${isSingles ? '' : 'Tracks'}</span>
     <button class="btn btn-ghost btn-sm" onclick="addTrackToRelease('${id}')">
       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       ${isSingles ? 'Add single' : 'Add track'}
@@ -752,7 +752,8 @@ function onPickExistingSingle(relId, idx, sel) {
 function trackRowHTML(relId, idx, track, isSingles=false) {
   const durDisplay = track.duration ? fmtDur(track.duration) : '';
   const hasLrc = track.lyrics && track.lyrics.startsWith('[');
-  const lyricsMode = hasLrc ? 'lrc' : 'text';
+  const hasText = track.lyrics && !hasLrc;
+  const lyricsMode = hasLrc ? 'lrc' : hasText ? 'text' : 'none';
   const singleOpts = isSingles ? [] : getSingleOptions();
   const hasSingles = singleOpts.length > 0;
 
@@ -766,13 +767,13 @@ function trackRowHTML(relId, idx, track, isSingles=false) {
 
   return `<div class="track-item" id="titem-${relId}-${idx}" data-idx="${idx}">
 
-    <!-- HEADER: drag + number + duration + delete -->
+    <!-- HEADER: drag + number + duration (albums) + delete -->
     <div class="track-item-header">
       <div class="drag-handle" draggable="true" onmousedown="event.stopPropagation()">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 6a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm0 7.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm0 7.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm8-15a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm0 7.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm0 7.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg>
       </div>
       <div class="track-num">${idx+1}</div>
-      ${durDisplay ? `<span class="dur-display" style="font-size:11px;color:var(--text3);margin-left:auto;margin-right:8px;font-variant-numeric:tabular-nums">${durDisplay}</span>` : '<span class="dur-display" style="margin-left:auto;margin-right:8px"></span>'}
+      ${!isSingles && durDisplay ? `<span class="dur-display" style="font-size:11px;color:var(--text3);margin-left:auto;margin-right:8px;font-variant-numeric:tabular-nums">${durDisplay}</span>` : '<span class="dur-display" style="margin-left:auto;margin-right:8px"></span>'}
       <button class="btn btn-danger btn-sm btn-icon" onclick="removeTrackFromRelease('${relId}',${idx})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
 
@@ -787,6 +788,7 @@ function trackRowHTML(relId, idx, track, isSingles=false) {
           </div>
         </div>
         <input type="file" id="tcover-file-${relId}-${idx}" class="file-input" accept="image/*" onchange="handleSingleCover('${relId}',${idx},this)">
+        ${durDisplay ? `<div class="dur-display" style="font-size:11px;color:var(--text3);margin-top:4px;text-align:center;font-variant-numeric:tabular-nums">${durDisplay}</div>` : ''}
       </div>` : ''}
 
       <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:10px">
@@ -860,12 +862,14 @@ function trackRowHTML(relId, idx, track, isSingles=false) {
     <!-- LYRICS (hidden when from single) -->
     <div id="tlyrics-row-${relId}-${idx}" style="display:${sourceMode==='pick'?'none':'block'};margin-top:12px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <label class="label" style="margin-bottom:0">Lyrics <span>(optional)</span></label>
+        <label class="label" style="margin-bottom:0">Lyrics</label>
         <div style="display:flex;gap:0;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:2px">
+          <button id="ltab-none-${relId}-${idx}" onclick="setLyricsTab('${relId}',${idx},'none')"
+            style="border:none;background:${lyricsMode==='none'?'var(--surface2)':'transparent'};color:${lyricsMode==='none'?'var(--text)':'var(--text3)'};font-family:var(--font);font-size:11px;font-weight:600;padding:3px 10px;border-radius:4px;cursor:pointer;transition:all var(--ease)">None</button>
           <button id="ltab-text-${relId}-${idx}" onclick="setLyricsTab('${relId}',${idx},'text')"
             style="border:none;background:${lyricsMode==='text'?'var(--surface2)':'transparent'};color:${lyricsMode==='text'?'var(--text)':'var(--text3)'};font-family:var(--font);font-size:11px;font-weight:600;padding:3px 10px;border-radius:4px;cursor:pointer;transition:all var(--ease)">Type</button>
           <button id="ltab-lrc-${relId}-${idx}" onclick="setLyricsTab('${relId}',${idx},'lrc')"
-            style="border:none;background:${lyricsMode==='lrc'?'var(--surface2)':'transparent'};color:${lyricsMode==='lrc'?'var(--text)':'var(--text3)'};font-family:var(--font);font-size:11px;font-weight:600;padding:3px 10px;border-radius:4px;cursor:pointer;transition:all var(--ease)">.lrc file</button>
+            style="border:none;background:${lyricsMode==='lrc'?'var(--surface2)':'transparent'};color:${lyricsMode==='lrc'?'var(--text)':'var(--text3)'};font-family:var(--font);font-size:11px;font-weight:600;padding:3px 10px;border-radius:4px;cursor:pointer;transition:all var(--ease)">.lrc</button>
         </div>
       </div>
       <div id="lpanel-text-${relId}-${idx}" style="display:${lyricsMode==='text'?'block':'none'}">
@@ -903,7 +907,7 @@ function addTrackToRelease(relId) {
 }
 
 function setLyricsTab(relId, idx, tab) {
-  const tabs = ['text','lrc'];
+  const tabs = ['none','text','lrc'];
   tabs.forEach(t => {
     const btn = document.getElementById(`ltab-${t}-${relId}-${idx}`);
     const panel = document.getElementById(`lpanel-${t}-${relId}-${idx}`);
@@ -911,6 +915,14 @@ function setLyricsTab(relId, idx, tab) {
     if (btn) { btn.style.background = active ? 'var(--surface2)' : 'transparent'; btn.style.color = active ? 'var(--text)' : 'var(--text3)'; }
     if (panel) panel.style.display = active ? 'block' : 'none';
   });
+  // Clear lyrics data when switching to none
+  if (tab === 'none') {
+    const textArea = document.getElementById(`tlyrics-text-${relId}-${idx}`);
+    const lrcArea = document.getElementById(`tlyrics-lrc-${relId}-${idx}`);
+    if (textArea) textArea.value = '';
+    if (lrcArea) lrcArea.value = '';
+    markDirty();
+  }
 }
 
 function handleLrcFile(relId, idx, input) {
