@@ -56,9 +56,6 @@ https://YOUR-USERNAME.github.io/music/
    https://YOUR-USERNAME.github.io/music/
    ```
 2. Paste your token, type your GitHub username, click **Connect**
-3. Fill in your profile, upload your music, hit **Save changes**
-4. Tap **Share my page** at the top — copy that link and put it in your Instagram bio
-
 **That's it. You're live.** 🎉
 
 </details>
