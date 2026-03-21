@@ -588,6 +588,31 @@ function renderReleaseSection(id) {
       }).catch(()=>{});
     }
   }
+
+  // Restore per-track covers for singles
+  if (rel.type === 'singles') {
+    const base = rel.path.substring(0, rel.path.lastIndexOf('/')+1);
+    (rel.data.tracks || []).forEach((track, idx) => {
+      if (!track.cover) return;
+      const cacheKey = 'single-cover-' + id + '-' + idx;
+      const applycover = (b64) => {
+        const img = document.getElementById('tcover-img-' + id + '-' + idx);
+        const ph  = document.getElementById('tcover-ph-'  + id + '-' + idx);
+        if (img) { img.src = 'data:image/jpeg;base64,' + b64; img.classList.add('loaded'); }
+        if (ph)  { ph.style.display = 'none'; }
+      };
+      if (pendingUploads[cacheKey] && pendingUploads[cacheKey]._b64cache) {
+        applycover(pendingUploads[cacheKey]._b64cache);
+      } else {
+        ghGet(base + track.cover).then(f => {
+          const b64 = f.content.replace(/\n/g,'');
+          if (!pendingUploads[cacheKey]) pendingUploads[cacheKey] = {};
+          pendingUploads[cacheKey]._b64cache = b64;
+          applycover(b64);
+        }).catch(function(){});
+      }
+    });
+  }
 }
 
 // ── ALBUM / EP / SINGLES HTML ─────────────────────────────────────
