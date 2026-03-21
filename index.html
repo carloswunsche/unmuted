@@ -1337,17 +1337,31 @@ function getReleaseData(rel) {
   const tracks = [];
   document.querySelectorAll(`[id^="titem-${id}-"]`).forEach(el => {
     const idx = el.dataset.idx;
-    const title = document.getElementById(`ttitle-${id}-${idx}`)?.value.trim()||'';
     const src = document.getElementById(`tsrc-${id}-${idx}`)?.value.trim()||'';
     const dur = parseInt(document.getElementById(`tdur-${id}-${idx}`)?.value||'0');
-    // Lyrics: check which tab is active by which panel is visible
+
+    // Detect if this track is "from singles" — pick panel is visible
+    const pickPanel = document.getElementById(`tsrc-pick-${id}-${idx}`);
+    const isFromSingle = pickPanel && pickPanel.style.display !== 'none';
+
+    if (isFromSingle) {
+      // Track sourced from an existing single — get title from the selected option
+      const sel = pickPanel.querySelector('select');
+      const opt = sel && sel.options[sel.selectedIndex];
+      const pickedSrc = opt ? opt.dataset.src : src;
+      const pickedTitle = opt ? opt.dataset.title : '';
+      const pickedDur = opt ? parseInt(opt.dataset.dur||0) : dur;
+      if (pickedSrc) tracks.push({ title: pickedTitle, src: pickedSrc, duration: pickedDur, fromSingle: true });
+      return;
+    }
+
+    // Regular new-upload track
+    const title = document.getElementById(`ttitle-${id}-${idx}`)?.value.trim()||'';
     const textPanel = document.getElementById(`lpanel-text-${id}-${idx}`);
     const lrcArea = document.getElementById(`tlyrics-lrc-${id}-${idx}`);
     const textArea = document.getElementById(`tlyrics-text-${id}-${idx}`);
     const lrcMode = textPanel && textPanel.style.display === 'none';
-    const lyrics = lrcMode
-      ? (lrcArea?.value.trim()||'')
-      : (textArea?.value.trim()||'');
+    const lyrics = lrcMode ? (lrcArea?.value.trim()||'') : (textArea?.value.trim()||'');
     const cover = document.getElementById(`tcover-${id}-${idx}`)?.value.trim()||'';
     const year = parseInt(document.getElementById(`tyear-${id}-${idx}`)?.value)||new Date().getFullYear();
     if (title||src) {
