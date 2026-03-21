@@ -1005,64 +1005,96 @@ function handleTrackFile(relId, idx, input) {
     const dispEl = document.getElementById(`tdisp-${relId}-${idx}`); if (dispEl) dispEl.textContent = titleInput.value;
   }
 
-  // Read duration
-  const objectUrl = URL.createObjectURL(file);
-  const tempAudio = new Audio();
-  tempAudio.preload = 'metadata';
-  tempAudio.onloadedmetadata = () => {
-    const secs = Math.round(tempAudio.duration);
-    // Write to hidden duration field
-    const durHidden = document.getElementById(`tdur-${relId}-${idx}`);
-    if (durHidden) durHidden.value = secs;
-    // Show duration in the track header
-    const header = document.querySelector(`#titem-${relId}-${idx} .track-item-header`);
-    if (header) {
-      let durSpan = header.querySelector('.dur-display');
-      if (!durSpan) {
-        durSpan = document.createElement('span');
-        durSpan.className = 'dur-display';
-        durSpan.style.cssText = 'font-size:11px;color:var(--green);margin-left:auto;margin-right:8px;font-variant-numeric:tabular-nums';
-        const removeBtn = header.querySelector('.btn-danger');
-        header.insertBefore(durSpan, removeBtn);
-      }
-      durSpan.textContent = fmtDur(secs);
-      setTimeout(() => { if (durSpan) durSpan.style.color = 'var(--text3)'; }, 1500);
-    }
-    URL.revokeObjectURL(objectUrl);
-  };
-  tempAudio.onerror = () => URL.revokeObjectURL(objectUrl);
-  tempAudio.src = objectUrl;
-
-  // Check size and show appropriate UI
+  // Check size and high-res detection
   const sizeMB = (file.size / 1024 / 1024).toFixed(1);
   const fnEl2 = getTrackEl('tfilename', relId, idx); if (fnEl2) fnEl2.textContent = file.name;
 
-  if (file.size > GH_MAX_BYTES) {
-    // Definitely too large — must convert
-    showConvertCard(relId, idx, file, sizeMB, true);
-    return;
+  // For FLAC: probe for high-res audio (96kHz+/24-bit) using AudioContext
+  // These formats won't play in browsers and need conversion
+  if (ext === 'flac') {
+    const reader1 = new FileReader();
+    reader1.onload = e => {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      ctx.decodeAudioData(e.target.result.slice(0)).then(buf => {
+        const isHighRes = buf.sampleRate > 48000 || buf.numberOfChannels > 0;
+        ctx.close();
+        if (buf.sampleRate > 48000) {
+          // High-res — must convert for browser compatibility
+          const stEl2 = getTrackEl('tstatus', relId, idx);
+          if (stEl2) stEl2.innerHTML = '';
+          showConvertCard(relId, idx, file, sizeMB, true, `High-res audio detected (${buf.sampleRate/1000}kHz) — browsers can't play this directly.`);
+          return;
+        }
+        // Standard FLAC — set duration and queue
+        const secs = Math.round(buf.duration);
+        setDurationDisplay(relId, idx, secs);
+        proceedWithUpload();
+      }).catch(() => {
+        // Can't decode — likely high-res, show convert card
+        ctx.close();
+        showConvertCard(relId, idx, file, sizeMB, true, 'This FLAC format may not be supported by browsers. Converting is recommended.');
+      });
+    };
+    reader1.readAsArrayBuffer(file);
+
+    // Still check size while we probe
+    if (file.size > GH_MAX_BYTES) { showConvertCard(relId, idx, file, sizeMB, true); return; }
+    if (file.size > GH_WARN_BYTES) { showConvertCard(relId, idx, file, sizeMB, false); return; }
+    return; // wait for probe result
   }
 
-  if (file.size > GH_WARN_BYTES) {
-    // Large but uploadable — suggest conversion, allow skipping
-    showConvertCard(relId, idx, file, sizeMB, false);
-    return;
-  }
+  // Read duration for non-FLAC files
+  const objectUrl = URL.createObjectURL(file);
+  const tempAudio = new Audio();
+  tempAudio.preload = 'metadata';
+  let metaTimer = setTimeout(() => {
+    URL.revokeObjectURL(objectUrl);
+    proceedWithUpload(); // proceed even without duration
+  }, 3000);
+  tempAudio.onloadedmetadata = () => {
+    clearTimeout(metaTimer);
+    setDurationDisplay(relId, idx, Math.round(tempAudio.duration));
+    URL.revokeObjectURL(objectUrl);
+    proceedWithUpload();
+  };
+  tempAudio.onerror = () => { clearTimeout(metaTimer); URL.revokeObjectURL(objectUrl); proceedWithUpload(); };
+  tempAudio.src = objectUrl;
 
-  // File is fine — queue it up
-  queueTrackFile(relId, idx, file, folder, baseName + '.' + ext);
+  function proceedWithUpload() {
+    if (file.size > GH_MAX_BYTES) { showConvertCard(relId, idx, file, sizeMB, true); return; }
+    if (file.size > GH_WARN_BYTES) { showConvertCard(relId, idx, file, sizeMB, false); return; }
+    queueTrackFile(relId, idx, file, folder, baseName + '.' + ext);
+  }
 }
 
-function showConvertCard(relId, idx, file, sizeMB, mustConvert) {
+function setDurationDisplay(relId, idx, secs) {
+  const durHidden = document.getElementById(`tdur-${relId}-${idx}`);
+  if (durHidden) durHidden.value = secs;
+  const header = document.querySelector(`#titem-${relId}-${idx} .track-item-header`);
+  if (header) {
+    let durSpan = header.querySelector('.dur-display');
+    if (!durSpan) {
+      durSpan = document.createElement('span');
+      durSpan.className = 'dur-display';
+      durSpan.style.cssText = 'font-size:11px;color:var(--green);margin-left:auto;margin-right:8px;font-variant-numeric:tabular-nums';
+      const removeBtn = header.querySelector('.btn-danger');
+      header.insertBefore(durSpan, removeBtn);
+    }
+    durSpan.textContent = fmtDur(secs);
+    setTimeout(() => { if (durSpan) durSpan.style.color = 'var(--text3)'; }, 1500);
+  }
+}
+
+function showConvertCard(relId, idx, file, sizeMB, mustConvert, customMsg) {
   const rel = releases.find(r => r.id === relId);
   const folder = rel.path.substring(0, rel.path.lastIndexOf('/'));
   const ext = file.name.split('.').pop().toLowerCase();
   const baseName = file.name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9._-]/g,'').replace(/\.[^.]+$/,'');
 
   const isCompressed = ['mp3','ogg','m4a','aac'].includes(ext);
-  const tip = isCompressed
+  const tip = customMsg || (isCompressed
     ? 'This file is already compressed. Converting will reduce size further but may affect quality slightly.'
-    : 'Converting to OGG Opus gives great quality at a much smaller size.';
+    : 'Converting to OGG Opus gives great quality at a much smaller size.');
 
   document.getElementById(`tstatus-${relId}-${idx}`).innerHTML = `
     <div style="background:${mustConvert ? 'var(--danger-bg)' : 'var(--warning-bg)'};border:1px solid ${mustConvert ? 'rgba(224,108,108,.2)' : 'rgba(224,168,74,.25)'};border-radius:8px;padding:12px 14px;margin-top:8px;">
@@ -1184,14 +1216,11 @@ function getTrackEl(prefix, relId, idx) {
 
 function queueTrackFile(relId, idx, file, folder, filename) {
   const fullPath = `${folder}/${filename}`;
-  console.log('[queue] relId:', relId, 'idx:', idx, 'fullPath:', fullPath);
   const fnEl = getTrackEl('tfilename', relId, idx);
   const srcEl = document.getElementById(`tsrc-${relId}-${idx}`);
   const stEl = getTrackEl('tstatus', relId, idx);
-  console.log('[queue] fnEl:', !!fnEl, 'srcEl:', !!srcEl, 'stEl:', !!stEl);
   if (fnEl) fnEl.textContent = filename;
   if (srcEl) srcEl.value = filename;
-  console.log('[queue] srcEl value after set:', srcEl?.value);
   if (stEl) stEl.innerHTML = `
     <div class="track-status uploading">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
@@ -1520,7 +1549,6 @@ async function saveAll() {
     }
 
     // 1. Upload pending images
-    console.log('[save] pendingUploads keys:', Object.keys(pendingUploads), Object.entries(pendingUploads).map(([k,v])=>k+':'+!!v.b64));
     for (const [key, val] of Object.entries(pendingUploads)) {
       if (!val.b64) continue;
       const sha = await ghGetSha(val.path);
