@@ -42,7 +42,7 @@ https://YOUR-USERNAME.github.io/music/
 > 📹 *GIF: github.com/settings/tokens/new → type "Unmuted" → No expiration → check repo → Generate token → copy*
 
 1. Go to **[github.com/settings/tokens/new](https://github.com/settings/tokens/new)**
-2. **Nota:** type `Unmuted`
+2. **Note:** type `Unmuted`
 3. **Expiration:** choose `No expiration`
 4. Scroll down and tick the **repo** checkbox
 5. Click <img src="https://img.shields.io/badge/Generate%20token-238636?style=flat-square&logoColor=white" alt="Generate token"/>
