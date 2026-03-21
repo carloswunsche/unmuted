@@ -684,60 +684,68 @@ function albumHTML(rel) {
 }
 
 function getSingleOptions() {
-  // Collect all singles tracks for the "pick from singles" dropdown
-  const opts = [{ label: '— Upload new file —', value: '' }];
+  const opts = [];
   releases.forEach(r => {
     if (r.type !== 'singles') return;
     (r.data.tracks || []).forEach(t => {
       if (!t.src) return;
       const base = r.path.substring(0, r.path.lastIndexOf('/') + 1);
-      opts.push({ label: t.title || t.src, value: base + t.src, duration: t.duration || 0, title: t.title || '' });
+      opts.push({ label: t.title || t.src, src: base + t.src, duration: t.duration || 0, title: t.title || '', lyrics: t.lyrics || '' });
     });
   });
   return opts;
 }
 
-function onPickSingle(relId, idx, sel) {
-  const opt = sel.options[sel.selectedIndex];
-  const src = sel.value;
-  const uploadSection = document.getElementById('tupload-' + relId + '-' + idx);
-  if (src) {
-    // Hide upload section, fill in src and duration from the single
-    if (uploadSection) uploadSection.style.display = 'none';
+function setTrackSource(relId, idx, source) {
+  const newBtn  = document.getElementById('tsrc-btn-new-'  + relId + '-' + idx);
+  const pickBtn = document.getElementById('tsrc-btn-pick-' + relId + '-' + idx);
+  const newPanel  = document.getElementById('tsrc-new-'  + relId + '-' + idx);
+  const pickPanel = document.getElementById('tsrc-pick-' + relId + '-' + idx);
+  const titleRow  = document.getElementById('ttitle-row-' + relId + '-' + idx);
+  const lyricsRow = document.getElementById('tlyrics-row-' + relId + '-' + idx);
+
+  const isNew = source === 'new';
+  newBtn.style.background  = isNew  ? 'var(--surface2)' : 'transparent';
+  newBtn.style.color       = isNew  ? 'var(--text)'     : 'var(--text3)';
+  pickBtn.style.background = !isNew ? 'var(--surface2)' : 'transparent';
+  pickBtn.style.color      = !isNew ? 'var(--text)'     : 'var(--text3)';
+  newPanel.style.display  = isNew  ? 'block' : 'none';
+  pickPanel.style.display = !isNew ? 'block' : 'none';
+  titleRow.style.display  = isNew  ? 'block' : 'none';
+  lyricsRow.style.display = isNew  ? 'block' : 'none';
+
+  if (isNew) {
+    // Clear the src so it doesn't carry over from a previous selection
     const srcEl = document.getElementById('tsrc-' + relId + '-' + idx);
-    const durEl = document.getElementById('tdur-' + relId + '-' + idx);
-    const titleEl = document.getElementById('ttitle-' + relId + '-' + idx);
-    const dispEl = document.getElementById('tdisp-' + relId + '-' + idx);
-    const fnEl = document.getElementById('tfilename-' + relId + '-' + idx);
-    if (srcEl) srcEl.value = src;
-    if (durEl) durEl.value = opt.dataset.dur || 0;
-    if (titleEl && !titleEl.value) { titleEl.value = opt.dataset.title || ''; }
-    if (dispEl && !dispEl.textContent.trim() || dispEl.textContent === 'New track') dispEl.textContent = opt.dataset.title || 'New track';
-    if (fnEl) fnEl.textContent = src.split('/').pop();
-    // Update duration display in header
-    const dur = parseInt(opt.dataset.dur || 0);
-    const durSpan = document.querySelector('#titem-' + relId + '-' + idx + ' .dur-display');
-    if (durSpan && dur) durSpan.textContent = fmtDur(dur);
-    markDirty();
-  } else {
-    if (uploadSection) uploadSection.style.display = 'block';
+    if (srcEl) srcEl.value = '';
   }
+}
+
+function onPickExistingSingle(relId, idx, sel) {
+  const opt = sel.options[sel.selectedIndex];
+  const srcEl  = document.getElementById('tsrc-'  + relId + '-' + idx);
+  const durEl  = document.getElementById('tdur-'  + relId + '-' + idx);
+  const durSpan = document.querySelector('#titem-' + relId + '-' + idx + ' .dur-display');
+  if (srcEl) srcEl.value = opt.dataset.src || '';
+  if (durEl) durEl.value = opt.dataset.dur || 0;
+  if (durSpan && opt.dataset.dur) durSpan.textContent = fmtDur(parseInt(opt.dataset.dur));
+  markDirty();
 }
 
 function trackRowHTML(relId, idx, track, isSingles=false) {
   const durDisplay = track.duration ? fmtDur(track.duration) : '';
   const hasLrc = track.lyrics && track.lyrics.startsWith('[');
   const lyricsMode = hasLrc ? 'lrc' : 'text';
-
-  // Build singles picker options for album tracks
   const singleOpts = isSingles ? [] : getSingleOptions();
-  const pickerHTML = !isSingles && singleOpts.length > 1 ? `
-    <div style="margin-bottom:8px">
-      <label class="label" style="margin-bottom:4px">Pick from singles <span>(optional)</span></label>
-      <select class="input" style="height:34px;font-size:12px" onchange="onPickSingle('${relId}',${idx},this)">
-        ${singleOpts.map(o => `<option value="${esc(o.value)}" data-dur="${o.duration||0}" data-title="${esc(o.title)}">${esc(o.label)}</option>`).join('')}
-      </select>
-    </div>` : '';
+  const hasSingles = singleOpts.length > 0;
+
+  // Detect if this track is already sourced from a single (src contains a slash = path reference)
+  const isFromSingle = !isSingles && hasSingles && track.src && track.src.includes('/');
+  const sourceMode = isFromSingle ? 'pick' : 'new';
+
+  const singlePickerOpts = singleOpts.map(o =>
+    `<option value="" data-src="${esc(o.src)}" data-dur="${o.duration}" data-title="${esc(o.title)}" ${isFromSingle && track.src === o.src ? 'selected' : ''}>${esc(o.label)}</option>`
+  ).join('');
 
   return `<div class="track-item" id="titem-${relId}-${idx}" data-idx="${idx}">
 
@@ -748,7 +756,6 @@ function trackRowHTML(relId, idx, track, isSingles=false) {
       <button class="btn btn-danger btn-sm btn-icon" onclick="removeTrackFromRelease('${relId}',${idx})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
 
-    <!-- MAIN ROW: cover (singles only) | fields -->
     <div style="display:flex;gap:14px;align-items:flex-start;margin-top:10px">
 
       ${isSingles ? `
@@ -762,26 +769,47 @@ function trackRowHTML(relId, idx, track, isSingles=false) {
         <input type="file" id="tcover-file-${relId}-${idx}" class="file-input" accept="image/*" onchange="handleSingleCover('${relId}',${idx},this)">
       </div>` : ''}
 
-      <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:8px">
+      <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:10px">
 
-        <!-- Title + Year -->
-        <div style="display:grid;grid-template-columns:1fr ${isSingles ? '90px' : '0fr'};gap:8px">
-          <div>
-            <label class="label" style="margin-bottom:4px">Title</label>
-            <input class="input" id="ttitle-${relId}-${idx}" type="text" value="${esc(track.title||'')}" placeholder="Song name"
-              oninput="document.getElementById('tdisp-${relId}-${idx}').textContent=this.value||'';markDirty()">
+        ${!isSingles && hasSingles ? `
+        <!-- TRACK SOURCE TOGGLE -->
+        <div>
+          <label class="label" style="margin-bottom:6px">Track source</label>
+          <div style="display:flex;gap:0;background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:2px;width:fit-content;margin-bottom:10px">
+            <button id="tsrc-btn-new-${relId}-${idx}" onclick="setTrackSource('${relId}',${idx},'new')"
+              style="border:none;background:${sourceMode==='new'?'var(--surface2)':'transparent'};color:${sourceMode==='new'?'var(--text)':'var(--text3)'};font-family:var(--font);font-size:12px;font-weight:600;padding:5px 14px;border-radius:5px;cursor:pointer;transition:all var(--ease)">
+              New upload
+            </button>
+            <button id="tsrc-btn-pick-${relId}-${idx}" onclick="setTrackSource('${relId}',${idx},'pick')"
+              style="border:none;background:${sourceMode==='pick'?'var(--surface2)':'transparent'};color:${sourceMode==='pick'?'var(--text)':'var(--text3)'};font-family:var(--font);font-size:12px;font-weight:600;padding:5px 14px;border-radius:5px;cursor:pointer;transition:all var(--ease)">
+              From your singles
+            </button>
           </div>
-          ${isSingles ? `<div>
-            <label class="label" style="margin-bottom:4px">Year</label>
-            <input class="input" id="tyear-${relId}-${idx}" type="number" value="${track.year||new Date().getFullYear()}" oninput="markDirty()" placeholder="${new Date().getFullYear()}">
-          </div>` : ''}
-        </div>
 
-        <!-- Singles picker (album tracks only) -->
-        ${pickerHTML}
+          <!-- New upload panel -->
+          <div id="tsrc-new-${relId}-${idx}" style="display:${sourceMode==='new'?'block':'none'}">
+            <label class="label" style="margin-bottom:4px">Audio file</label>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-ghost btn-sm" onclick="document.getElementById('tfile-${relId}-${idx}').click()">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                ${track.src && !isFromSingle ? 'Replace' : 'Upload audio'}
+              </button>
+              <span id="tfilename-${relId}-${idx}" style="font-size:11px;color:var(--text3)">${track.src && !isFromSingle ? track.src : ''}</span>
+            </div>
+            <input type="file" id="tfile-${relId}-${idx}" class="file-input" accept=".mp3,.flac,.ogg,.wav,.m4a,.aac,audio/*" onchange="handleTrackFile('${relId}',${idx},this)">
+            <div id="tstatus-${relId}-${idx}"></div>
+          </div>
 
-        <!-- Audio file upload -->
-        <div id="tupload-${relId}-${idx}">
+          <!-- Pick from singles panel -->
+          <div id="tsrc-pick-${relId}-${idx}" style="display:${sourceMode==='pick'?'block':'none'}">
+            <label class="label" style="margin-bottom:4px">Single</label>
+            <select class="input" style="height:36px;font-size:13px" onchange="onPickExistingSingle('${relId}',${idx},this)">
+              ${singlePickerOpts}
+            </select>
+          </div>
+        </div>` : `
+        <!-- No singles yet — just show upload -->
+        <div>
           <label class="label" style="margin-bottom:4px">Audio file</label>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <button class="btn btn-ghost btn-sm" onclick="document.getElementById('tfile-${relId}-${idx}').click()">
@@ -792,13 +820,25 @@ function trackRowHTML(relId, idx, track, isSingles=false) {
           </div>
           <input type="file" id="tfile-${relId}-${idx}" class="file-input" accept=".mp3,.flac,.ogg,.wav,.m4a,.aac,audio/*" onchange="handleTrackFile('${relId}',${idx},this)">
           <div id="tstatus-${relId}-${idx}"></div>
+        </div>`}
+
+        <!-- Title (hidden when from single) -->
+        <div id="ttitle-row-${relId}-${idx}" style="display:${sourceMode==='pick'?'none':'block'}">
+          <label class="label" style="margin-bottom:4px">Title</label>
+          <input class="input" id="ttitle-${relId}-${idx}" type="text" value="${esc(track.title||'')}" placeholder="Song name" oninput="markDirty()">
         </div>
+
+        ${isSingles ? `
+        <div>
+          <label class="label" style="margin-bottom:4px">Year</label>
+          <input class="input" id="tyear-${relId}-${idx}" type="number" value="${track.year||new Date().getFullYear()}" oninput="markDirty()" placeholder="${new Date().getFullYear()}">
+        </div>` : ''}
 
       </div>
     </div>
 
-    <!-- LYRICS -->
-    <div style="margin-top:12px">
+    <!-- LYRICS (hidden when from single) -->
+    <div id="tlyrics-row-${relId}-${idx}" style="display:${sourceMode==='pick'?'none':'block'};margin-top:12px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <label class="label" style="margin-bottom:0">Lyrics <span>(optional)</span></label>
         <div style="display:flex;gap:0;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:2px">
