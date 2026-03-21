@@ -4,15 +4,15 @@
 
 # Do these 3 steps and you're live 🚀
 
-**One-time setup · ~3 minutes**<br>
-After this you'll never need to touch GitHub again — everything is done from your dashboard.
+**It only takes 3 minutes.**<br>
+After this you'll never need to touch GitHub again.
 
 </div>
 
 ---
 
 <details open>
-<summary><h2>Step 1 — Turn on your page &nbsp; <img src="https://img.shields.io/badge/3%20clicks-238636?style=flat-square" alt="3 clicks"/></h2></summary>
+<summary><h2>Step 1 — Turn on your page</h2></summary>
 
 > 📹 *GIF: Click Settings tab → Pages in sidebar → Branch dropdown select "main" → Save button*
 
@@ -33,7 +33,7 @@ https://YOUR-USERNAME.github.io/music/
 ---
 
 <details>
-<summary><h2>Step 2 — Create your access token &nbsp; <img src="https://img.shields.io/badge/one%20time%20only-1f6feb?style=flat-square" alt="one time only"/></h2></summary>
+<summary><h2>Step 2 — Create your access token</h2></summary>
 
 > 📹 *GIF: github.com/settings/tokens/new → type "Unmuted" → No expiration → check repo → Generate token → copy*
 
@@ -51,7 +51,7 @@ https://YOUR-USERNAME.github.io/music/
 ---
 
 <details>
-<summary><h2>Step 3 — Open your dashboard &nbsp; <img src="https://img.shields.io/badge/you're%20in-7b5ea7?style=flat-square" alt="you're in"/></h2></summary>
+<summary><h2>Step 3 — Open your dashboard</h2></summary>
 
 > 📹 *GIF: open dashboard URL → paste token → type username → Connect → dashboard loads*
 
