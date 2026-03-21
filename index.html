@@ -405,8 +405,9 @@ async function loadData() {
     // Load avatar
     try {
       const img = await ghGet('avatar.jpg');
-      showImgPreview('avatar', `data:image/jpeg;base64,${img.content.replace(/\n/g,'')}`);
-      pendingUploads['avatar'] = { sha: img.sha };
+      const b64 = img.content.replace(/\n/g,'');
+      pendingUploads['avatar'] = { sha: img.sha, _b64cache: b64 };
+      showImgPreview('avatar', `data:image/jpeg;base64,${b64}`);
     } catch {}
 
     populateProfile(artistData);
@@ -486,10 +487,18 @@ function renderSection(name) {
   else if (name === 'settings') content.innerHTML = settingsHTML();
 
   if (name === 'profile') {
-    populateProfile(artistData);
-    // Restore avatar preview
-    if (pendingUploads['avatar']?.sha) {
-      ghGet('avatar.jpg').then(f => showImgPreview('avatar', `data:image/jpeg;base64,${f.content.replace(/\n/g,'')}`)).catch(()=>{});
+    if (artistData) populateProfile(artistData);
+    // Restore avatar — use cached b64 if available, otherwise fetch
+    if (pendingUploads['avatar']?._b64cache) {
+      showImgPreview('avatar', `data:image/jpeg;base64,${pendingUploads['avatar']._b64cache}`);
+    } else {
+      ghGet('avatar.jpg')
+        .then(f => {
+          const b64 = f.content.replace(/\n/g,'');
+          if (!pendingUploads['avatar']) pendingUploads['avatar'] = {};
+          pendingUploads['avatar']._b64cache = b64;
+          showImgPreview('avatar', `data:image/jpeg;base64,${b64}`);
+        }).catch(()=>{});
     }
   }
   if (name === 'links' && artistData) populateLinks(artistData.links || {});
@@ -564,11 +573,17 @@ function renderReleaseSection(id) {
   if (rel.type === 'playlist') content.innerHTML = playlistHTML(rel);
   else content.innerHTML = albumHTML(rel);
 
-  // Restore cover preview
-  if (rel.data.cover) {
+  // Restore cover preview — use cache if available
+  const coverKey = `cover-${id}`;
+  if (pendingUploads[coverKey]?._b64cache) {
+    showImgPreview(coverKey, `data:image/jpeg;base64,${pendingUploads[coverKey]._b64cache}`);
+  } else if (rel.data.cover) {
     const base = rel.path.substring(0, rel.path.lastIndexOf('/')+1);
     ghGet(base + rel.data.cover).then(f => {
-      showImgPreview(`cover-${id}`, `data:image/jpeg;base64,${f.content.replace(/\n/g,'')}`);
+      const b64 = f.content.replace(/\n/g,'');
+      if (!pendingUploads[coverKey]) pendingUploads[coverKey] = {};
+      pendingUploads[coverKey]._b64cache = b64;
+      showImgPreview(coverKey, `data:image/jpeg;base64,${b64}`);
     }).catch(()=>{});
   }
 }
@@ -889,7 +904,7 @@ function handleReleaseCover(relId, input) {
   const reader = new FileReader();
   reader.onload = e => {
     const b64 = e.target.result.split(',')[1];
-    pendingUploads[`cover-${relId}`] = { b64, path: `${folder}/cover.jpg` };
+    pendingUploads[`cover-${relId}`] = { b64, path: `${folder}/cover.jpg`, _b64cache: b64 };
     showImgPreview(`cover-${relId}`, e.target.result);
     markDirty();
   };
@@ -1111,7 +1126,7 @@ function handleImgUpload(key, path, input) {
   const reader = new FileReader();
   reader.onload = e => {
     const b64 = e.target.result.split(',')[1];
-    pendingUploads[key] = { b64, path, sha: pendingUploads[key]?.sha||null };
+    pendingUploads[key] = { b64, path, sha: pendingUploads[key]?.sha||null, _b64cache: b64 };
     showImgPreview(key, e.target.result); markDirty();
   };
   reader.readAsDataURL(file);
