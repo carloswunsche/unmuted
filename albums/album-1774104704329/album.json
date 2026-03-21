@@ -3,5 +3,11 @@
   "type": "ep",
   "year": 2026,
   "cover": "cover.jpg",
-  "tracks": []
+  "tracks": [
+    {
+      "title": "Old and new",
+      "src": "old-and-new-wip-001.mp3",
+      "duration": 228
+    }
+  ]
 }
