@@ -220,6 +220,10 @@
   </div>
   <div class="topbar-right">
     <span class="save-status" id="save-status"></span>
+    <button class="btn btn-ghost" id="copy-link-btn" onclick="copyDeepLink()" style="display:none" title="Copy your Unmuted share link">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      Copy link
+    </button>
     <div id="token-badge-wrap"></div>
     <button class="btn btn-primary" id="save-btn" onclick="saveAll()" disabled>
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
@@ -332,6 +336,7 @@ function showMain() {
   document.getElementById('setup-screen').style.display = 'none';
   document.getElementById('main-layout').style.display = 'grid';
   document.getElementById('token-badge-wrap').innerHTML = `<div class="token-badge ok"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>Connected</div>`;
+  document.getElementById('copy-link-btn').style.display = 'inline-flex';
   document.getElementById('save-btn').disabled = false;
   updateShareUrls();
   renderSection('profile');
@@ -1443,22 +1448,22 @@ function getReleaseData(rel) {
 function shareHTML() {
   const base = `https://${GH.username}.github.io/${GH.repo}`;
   const manifest = `${base}/artist.json`;
-  const deep = `https://unmuted.app/add#${manifest}`;
+  const deep = `https://unmuted-music.netlify.app/add#${manifest}`;
   return `
   <div class="sec-title">Share your page</div>
   <p class="sec-sub">Share these links so listeners can add you on Unmuted.</p>
-  <div class="share-card">
-    <div class="share-label">Manifest URL — paste in browser to verify it's live</div>
-    <div class="share-url"><span id="url-manifest">${manifest}</span>
-      <button class="btn btn-ghost btn-sm btn-icon" onclick="copyText('url-manifest')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
-    </div>
-  </div>
-  <div class="share-card">
-    <div class="share-label">Unmuted deep link — put this in your Instagram bio</div>
+  <div class="share-card" style="border-color:var(--accent);background:rgba(123,94,167,0.06)">
+    <div class="share-label" style="color:var(--accent2)">Your Unmuted link — share this everywhere</div>
     <div class="share-url"><span id="url-deep">${deep}</span>
       <button class="btn btn-ghost btn-sm btn-icon" onclick="copyText('url-deep')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
     </div>
-    <div class="input-hint">When someone taps this, Unmuted opens and asks if they want to add you.</div>
+    <div class="input-hint">Put this in your Instagram bio, tweet it, or add it to your QR code. When someone taps it, Unmuted opens and asks if they want to add you.</div>
+  </div>
+  <div class="share-card">
+    <div class="share-label">Manifest URL — open in browser to verify your page is live</div>
+    <div class="share-url"><span id="url-manifest">${manifest}</span>
+      <button class="btn btn-ghost btn-sm btn-icon" onclick="copyText('url-manifest')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+    </div>
   </div>`;
 }
 function settingsHTML() {
@@ -1585,6 +1590,12 @@ function setSaveStatus(type, msg) {
   const el = document.getElementById('save-status');
   el.textContent = msg||''; el.className = 'save-status'+(type?' '+type:'');
 }
+function copyDeepLink() {
+  const base = `https://${GH.username}.github.io/${GH.repo}`;
+  const deep = `https://unmuted-music.netlify.app/add#${base}/artist.json`;
+  navigator.clipboard.writeText(deep).then(() => toast('Link copied! 🔗'));
+}
+
 function copyText(elId) {
   navigator.clipboard.writeText(document.getElementById(elId).textContent).then(()=>toast('Copied!'));
 }
