@@ -279,8 +279,10 @@
     <button class="nav-item" id="nav-settings" onclick="showSection('settings')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
       GitHub settings
-      <span id="connected-dot" style="display:none;width:7px;height:7px;border-radius:50%;background:var(--green);margin-left:auto;flex-shrink:0"></span>
     </button>
+    <div id="connected-badge" style="display:none;font-size:10px;font-weight:700;color:var(--green);padding:2px 10px 6px 36px;letter-spacing:.04em;display:none">
+      ● Connected
+    </div>
   </nav>
 
   <main class="content" id="main-content">
@@ -333,8 +335,8 @@ function showSetup() {
 function showMain() {
   document.getElementById('setup-screen').style.display = 'none';
   document.getElementById('main-layout').style.display = 'grid';
-  const dot = document.getElementById('connected-dot');
-  if (dot) dot.style.display = 'block';
+  const badge = document.getElementById('connected-badge');
+  if (badge) badge.style.display = 'block';
   document.getElementById('copy-link-btn').style.display = 'inline-flex';
   document.getElementById('save-btn').disabled = false;
   updateShareUrls();
@@ -771,7 +773,7 @@ function trackRowHTML(relId, idx, track, isSingles=false) {
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 6a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm0 7.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm0 7.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm8-15a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm0 7.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm0 7.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg>
       </div>
       <div class="track-num">${idx+1}</div>
-      ${!isSingles && durDisplay ? `<span class="dur-display" style="font-size:11px;color:var(--text3);margin-left:auto;margin-right:8px;font-variant-numeric:tabular-nums">${durDisplay}</span>` : '<span class="dur-display" style="margin-left:auto;margin-right:8px"></span>'}
+      <span class="dur-display" style="font-size:11px;color:var(--text3);margin-left:auto;margin-right:8px;font-variant-numeric:tabular-nums${!isSingles && durDisplay ? '' : ';display:none'}">${!isSingles && durDisplay ? durDisplay : ''}</span>
       <button class="btn btn-danger btn-sm btn-icon" onclick="removeTrackFromRelease('${relId}',${idx})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
 
@@ -1614,19 +1616,28 @@ function getProfileData() {
   const name = document.getElementById('f-name')?.value.trim() || artistData?.name || '';
   const bio = document.getElementById('f-bio')?.value.trim() || artistData?.bio || '';
   const location = document.getElementById('f-location')?.value.trim() || artistData?.location || '';
-  const links = {};
-  const ig = document.getElementById('l-instagram')?.value.trim();
-  const yt = document.getElementById('l-youtube')?.value.trim();
-  const sc = document.getElementById('l-soundcloud')?.value.trim();
-  const tt = document.getElementById('l-tiktok')?.value.trim();
-  const sp = document.getElementById('l-spotify')?.value.trim();
-  const bc = document.getElementById('l-bandcamp')?.value.trim();
-  if (ig) links.instagram = ig.startsWith('http') ? ig : `https://instagram.com/${ig}`;
-  if (yt) links.youtube = yt.startsWith('http') ? yt : `https://youtube.com/@${yt.replace('@','')}`;
-  if (sc) links.soundcloud = sc.startsWith('http') ? sc : `https://soundcloud.com/${sc}`;
-  if (tt) links.tiktok = tt.startsWith('http') ? tt : `https://tiktok.com/@${tt.replace('@','')}`;
-  if (sp) links.spotify = sp;
-  if (bc) links.bandcamp = bc.startsWith('http') ? bc : `https://${bc}`;
+
+  // Only read links from DOM if the links section is currently rendered
+  // Otherwise preserve existing links to avoid wiping them on save
+  const linksInDom = !!document.getElementById('l-instagram');
+  let links = {};
+  if (linksInDom) {
+    const ig = document.getElementById('l-instagram')?.value.trim();
+    const yt = document.getElementById('l-youtube')?.value.trim();
+    const sc = document.getElementById('l-soundcloud')?.value.trim();
+    const tt = document.getElementById('l-tiktok')?.value.trim();
+    const sp = document.getElementById('l-spotify')?.value.trim();
+    const bc = document.getElementById('l-bandcamp')?.value.trim();
+    if (ig) links.instagram = ig.startsWith('http') ? ig : `https://instagram.com/${ig}`;
+    if (yt) links.youtube = yt.startsWith('http') ? yt : `https://youtube.com/@${yt.replace('@','')}`;
+    if (sc) links.soundcloud = sc.startsWith('http') ? sc : `https://soundcloud.com/${sc}`;
+    if (tt) links.tiktok = tt.startsWith('http') ? tt : `https://tiktok.com/@${tt.replace('@','')}`;
+    if (sp) links.spotify = sp;
+    if (bc) links.bandcamp = bc.startsWith('http') ? bc : `https://${bc}`;
+  } else {
+    links = artistData?.links || {};
+  }
+
   return {
     schema: 'unmuted/v1', name, bio, location,
     avatar: 'avatar.jpg', links,
@@ -1644,7 +1655,17 @@ function setSaveStatus(type, msg) {
 function copyDeepLink() {
   const base = `https://${GH.username}.github.io/${GH.repo}`;
   const deep = `https://unmuted-music.netlify.app/add#${base}/artist.json`;
-  navigator.clipboard.writeText(deep).then(() => toast('Link copied! 🔗'));
+  navigator.clipboard.writeText(deep).then(() => {
+    const btn = document.getElementById('copy-link-btn');
+    if (btn) {
+      btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Link copied!`;
+      btn.style.color = 'var(--green)';
+      setTimeout(() => {
+        btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share my page`;
+        btn.style.color = '';
+      }, 2000);
+    }
+  });
 }
 
 function copyText(elId) {
