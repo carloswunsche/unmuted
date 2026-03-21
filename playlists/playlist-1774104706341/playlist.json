@@ -1,7 +1,6 @@
 {
-  "title": "New Playlist",
+  "title": "Test playlist",
   "type": "playlist",
-  "year": 2026,
   "cover": "cover.jpg",
   "tracks": []
 }
