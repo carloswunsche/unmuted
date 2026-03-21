@@ -1058,7 +1058,10 @@ function handleSingleCover(relId, idx, input) {
     // Update hidden field and preview
     const hiddenEl = document.getElementById(`tcover-${relId}-${idx}`);
     if (hiddenEl) hiddenEl.value = coverFilename;
-    showSingleCoverPreview(relId, idx, e.target.result);
+    const img = document.getElementById(`tcover-img-${relId}-${idx}`);
+    const ph = document.getElementById(`tcover-ph-${relId}-${idx}`);
+    if (img) { img.src = e.target.result; img.classList.add('loaded'); }
+    if (ph) ph.style.display = 'none';
     markDirty();
   };
   reader.readAsDataURL(file);
@@ -1315,13 +1318,6 @@ function handleImgUpload(key, path, input) {
   };
   reader.readAsDataURL(file);
 }
-function showSingleCoverPreview(relId, idx, src) {
-  const img = document.getElementById(`tcover-img-${relId}-${idx}`);
-  const ph = document.getElementById(`tcover-ph-${relId}-${idx}`);
-  if (img) { img.src = src; img.classList.add('loaded'); }
-  if (ph) ph.style.display = 'none';
-}
-
 function showImgPreview(key, src) {
   const imgEl = document.getElementById(`${key === 'avatar' ? 'avatar' : 'cover'}-img${key !== 'avatar' ? '-'+key.replace('cover-','') : ''}`);
   const phEl = document.getElementById(`${key === 'avatar' ? 'avatar' : 'cover'}-ph${key !== 'avatar' ? '-'+key.replace('cover-','') : ''}`);
