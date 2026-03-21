@@ -641,8 +641,8 @@ function trackRowHTML(relId, idx, track) {
           oninput="document.getElementById('tdisp-${relId}-${idx}').textContent=this.value||'New track';markDirty()">
       </div>
       <div>
-        <label class="label">Duration <span>(m:ss)</span></label>
-        <input class="input" id="tdur-${relId}-${idx}" type="text" value="${track.duration?fmtDur(track.duration):''}" placeholder="3:45" oninput="markDirty()">
+        <label class="label">Duration <span>(auto)</span></label>
+        <input class="input" id="tdur-${relId}-${idx}" type="text" value="${track.duration?fmtDur(track.duration):''}" placeholder="auto" oninput="markDirty()" title="Detected automatically from the audio file. You can edit manually if needed.">
       </div>
     </div>
     <div style="margin-top:10px">
@@ -650,11 +650,11 @@ function trackRowHTML(relId, idx, track) {
       <div style="display:flex;gap:8px;align-items:center">
         <button class="btn btn-ghost btn-sm" onclick="document.getElementById('tfile-${relId}-${idx}').click()">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          ${track.src ? 'Replace MP3' : 'Upload MP3'}
+          ${track.src ? 'Replace file' : 'Upload audio'}
         </button>
         <span id="tfilename-${relId}-${idx}" style="font-size:12px;color:var(--text3)">${track.src||'No file yet'}</span>
       </div>
-      <input type="file" id="tfile-${relId}-${idx}" class="file-input" accept=".mp3,audio/mpeg" onchange="handleTrackFile('${relId}',${idx},this)">
+      <input type="file" id="tfile-${relId}-${idx}" class="file-input" accept=".mp3,.flac,.ogg,.wav,.m4a,.aac,audio/*" onchange="handleTrackFile('${relId}',${idx},this)">
       <div id="tstatus-${relId}-${idx}"></div>
     </div>
     <input type="hidden" id="tsrc-${relId}-${idx}" value="${esc(track.src||'')}">
@@ -688,24 +688,167 @@ function renumberReleaseTracks(relId) {
   });
 }
 
+const GH_MAX_BYTES = 95 * 1024 * 1024; // 95MB — GitHub API hard limit is 100MB
+
 function handleTrackFile(relId, idx, input) {
   const file = input.files[0]; if (!file) return;
-  if (!file.name.toLowerCase().endsWith('.mp3')) { toast('Use MP3 files for best compatibility', 'warning'); return; }
+  const ext = file.name.split('.').pop().toLowerCase();
+  const supported = ['mp3','flac','ogg','wav','m4a','aac'];
+  if (!supported.includes(ext)) { toast('Unsupported format. Use MP3, FLAC, OGG, WAV, or M4A.', 'danger'); return; }
+
   const rel = releases.find(r => r.id === relId);
   const folder = rel.path.substring(0, rel.path.lastIndexOf('/'));
-  const filename = file.name.toLowerCase().replace(/\s+/g,'-');
-  const fullPath = `${folder}/${filename}`;
-  document.getElementById(`tfilename-${relId}-${idx}`).textContent = filename;
-  document.getElementById(`tsrc-${relId}-${idx}`).value = filename;
+  const baseName = file.name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9._-]/g,'').replace(/\.[^.]+$/, '');
+
+  // Auto-fill title
   const titleInput = document.getElementById(`ttitle-${relId}-${idx}`);
   if (!titleInput.value) {
-    const auto = filename.replace('.mp3','').replace(/-/g,' ').replace(/^\d+\s*/,'');
+    const auto = baseName.replace(/-/g,' ').replace(/^\d+\s*/,'');
     titleInput.value = auto.charAt(0).toUpperCase() + auto.slice(1);
     document.getElementById(`tdisp-${relId}-${idx}`).textContent = titleInput.value;
   }
-  document.getElementById(`tstatus-${relId}-${idx}`).innerHTML = `<div class="track-status uploading"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>Ready — will upload on Save</div>`;
+
+  // Read duration
+  const objectUrl = URL.createObjectURL(file);
+  const tempAudio = new Audio();
+  tempAudio.preload = 'metadata';
+  tempAudio.onloadedmetadata = () => {
+    const secs = Math.round(tempAudio.duration);
+    const durField = document.getElementById(`tdur-${relId}-${idx}`);
+    if (durField) { durField.value = fmtDur(secs); durField.style.color = 'var(--green)'; setTimeout(() => durField.style.color = '', 1500); }
+    URL.revokeObjectURL(objectUrl);
+  };
+  tempAudio.onerror = () => URL.revokeObjectURL(objectUrl);
+  tempAudio.src = objectUrl;
+
+  // Check size
+  if (file.size > GH_MAX_BYTES) {
+    const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+    document.getElementById(`tfilename-${relId}-${idx}`).textContent = file.name;
+    document.getElementById(`tstatus-${relId}-${idx}`).innerHTML = `
+      <div style="background:var(--danger-bg);border:1px solid rgba(224,108,108,.2);border-radius:8px;padding:12px 14px;margin-top:8px;">
+        <div style="font-size:12px;color:var(--danger);font-weight:600;margin-bottom:6px;">
+          ⚠️ File is ${sizeMB}MB — too large for GitHub (100MB limit)
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:10px;">
+          Convert it to OGG Opus in your browser — great quality, much smaller file.
+        </div>
+        <button class="btn btn-primary btn-sm" id="convert-btn-${relId}-${idx}" onclick="convertAndLoad('${relId}',${idx},this._file)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Convert to OGG &amp; compress
+        </button>
+        <div id="convert-progress-${relId}-${idx}" style="display:none;margin-top:10px;">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:4px;" id="convert-label-${relId}-${idx}">Converting…</div>
+          <div style="background:var(--bg3);border-radius:4px;height:5px;overflow:hidden;">
+            <div id="convert-bar-${relId}-${idx}" style="height:100%;background:var(--accent);border-radius:4px;width:0%;transition:width .3s;"></div>
+          </div>
+        </div>
+      </div>`;
+    // Attach file to button since we can't pass it directly
+    document.getElementById(`convert-btn-${relId}-${idx}`)._file = file;
+    return;
+  }
+
+  // File is fine — queue it up
+  queueTrackFile(relId, idx, file, folder, baseName + '.' + ext);
+}
+
+async function convertAndLoad(relId, idx, file) {
+  const btn = document.getElementById(`convert-btn-${relId}-${idx}`);
+  const progressWrap = document.getElementById(`convert-progress-${relId}-${idx}`);
+  const progressBar = document.getElementById(`convert-bar-${relId}-${idx}`);
+  const progressLabel = document.getElementById(`convert-label-${relId}-${idx}`);
+  if (btn) { btn.disabled = true; btn.innerHTML = '<div class="spin"></div> Converting…'; }
+  if (progressWrap) progressWrap.style.display = 'block';
+
+  try {
+    const setProgress = (pct, label) => {
+      if (progressBar) progressBar.style.width = pct + '%';
+      if (progressLabel) progressLabel.textContent = label;
+    };
+
+    setProgress(10, 'Decoding audio…');
+    const arrayBuffer = await file.arrayBuffer();
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+    setProgress(40, 'Encoding to OGG Opus…');
+
+    // Pick best supported format
+    const mimeType = MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')
+      ? 'audio/ogg;codecs=opus'
+      : MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+      ? 'audio/webm;codecs=opus'
+      : 'audio/mp4';
+    const outExt = mimeType.startsWith('audio/ogg') ? 'ogg' : mimeType.startsWith('audio/webm') ? 'webm' : 'm4a';
+
+    // Render through offline context then encode via MediaRecorder
+    const dest = audioCtx.createMediaStreamDestination();
+    const source = audioCtx.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(dest);
+
+    const chunks = [];
+    const recorder = new MediaRecorder(dest.stream, { mimeType, audioBitsPerSecond: 128000 });
+    recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+
+    const done = new Promise(resolve => { recorder.onstop = resolve; });
+    recorder.start(250);
+    source.start(0);
+
+    // Simulate progress during encoding
+    const duration = audioBuffer.duration;
+    let elapsed = 0;
+    const tick = setInterval(() => {
+      elapsed += 0.25;
+      const pct = Math.min(90, 40 + (elapsed / duration) * 50);
+      setProgress(Math.round(pct), `Encoding… ${Math.round((elapsed/duration)*100)}%`);
+      if (elapsed >= duration) { clearInterval(tick); recorder.stop(); }
+    }, 250);
+
+    await done;
+    setProgress(95, 'Finalising…');
+
+    const blob = new Blob(chunks, { type: mimeType });
+    const sizeMB = (blob.size / 1024 / 1024).toFixed(1);
+
+    if (blob.size > GH_MAX_BYTES) {
+      throw new Error(`Converted file is still ${sizeMB}MB. Try a shorter track or use an external converter.`);
+    }
+
+    const rel = releases.find(r => r.id === relId);
+    const folder = rel.path.substring(0, rel.path.lastIndexOf('/'));
+    const baseName = file.name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9._-]/g,'').replace(/\.[^.]+$/, '');
+    const newFile = new File([blob], `${baseName}.${outExt}`, { type: mimeType });
+
+    setProgress(100, `Done! ${(file.size/1024/1024).toFixed(1)}MB → ${sizeMB}MB`);
+    await audioCtx.close();
+
+    setTimeout(() => {
+      document.getElementById(`tstatus-${relId}-${idx}`).innerHTML = '';
+      queueTrackFile(relId, idx, newFile, folder, `${baseName}.${outExt}`);
+      toast(`Converted to ${outExt.toUpperCase()} — ${sizeMB}MB ✓`, 'success');
+    }, 800);
+
+  } catch(e) {
+    toast('Conversion failed: ' + e.message, 'danger');
+    if (btn) { btn.disabled = false; btn.innerHTML = 'Convert to OGG &amp; compress'; }
+  }
+}
+
+function queueTrackFile(relId, idx, file, folder, filename) {
+  const fullPath = `${folder}/${filename}`;
+  document.getElementById(`tfilename-${relId}-${idx}`).textContent = filename;
+  document.getElementById(`tsrc-${relId}-${idx}`).value = filename;
+  document.getElementById(`tstatus-${relId}-${idx}`).innerHTML = `
+    <div class="track-status uploading">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      Ready (${(file.size/1024/1024).toFixed(1)}MB) — will upload on Save
+    </div>`;
   const reader = new FileReader();
-  reader.onload = e => { pendingUploads[`track-${relId}-${idx}`] = { b64: e.target.result.split(',')[1], path: fullPath, filename }; markDirty(); };
+  reader.onload = e => {
+    pendingUploads[`track-${relId}-${idx}`] = { b64: e.target.result.split(',')[1], path: fullPath, filename };
+    markDirty();
+  };
   reader.readAsDataURL(file);
 }
 
