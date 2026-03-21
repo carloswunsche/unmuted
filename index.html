@@ -581,33 +581,12 @@ function renderReleaseSection(id) {
     } else if (rel.data.cover) {
       const base = rel.path.substring(0, rel.path.lastIndexOf('/')+1);
       ghGet(base + rel.data.cover).then(f => {
-        const b64 = f.content.replace(/
-/g,'');
+        const b64 = f.content.replace(/\n/g,'');
         if (!pendingUploads[coverKey]) pendingUploads[coverKey] = {};
         pendingUploads[coverKey]._b64cache = b64;
         showImgPreview(coverKey, `data:image/jpeg;base64,${b64}`);
       }).catch(()=>{});
     }
-  }
-
-  // Restore per-track covers for singles
-  if (rel.type === 'singles') {
-    const base = rel.path.substring(0, rel.path.lastIndexOf('/')+1);
-    (rel.data.tracks || []).forEach((t, idx) => {
-      if (!t.cover) return;
-      const cacheKey = `single-cover-${id}-${idx}`;
-      if (pendingUploads[cacheKey]?._b64cache) {
-        showSingleCoverPreview(id, idx, `data:image/jpeg;base64,${pendingUploads[cacheKey]._b64cache}`);
-      } else {
-        ghGet(base + t.cover).then(f => {
-          const b64 = f.content.replace(/
-/g,'');
-          if (!pendingUploads[cacheKey]) pendingUploads[cacheKey] = {};
-          pendingUploads[cacheKey]._b64cache = b64;
-          showSingleCoverPreview(id, idx, `data:image/jpeg;base64,${b64}`);
-        }).catch(()=>{});
-      }
-    });
   }
 }
 
