@@ -3,17 +3,5 @@
   "type": "ep",
   "year": 2026,
   "cover": "cover.jpg",
-  "tracks": [
-    {
-      "title": "This Time",
-      "src": "singles/this-time.mp3",
-      "duration": 230,
-      "fromSingle": true
-    },
-    {
-      "title": "Old and new wip 001",
-      "src": "old-and-new-wip-001.mp3",
-      "duration": 228
-    }
-  ]
+  "tracks": []
 }
