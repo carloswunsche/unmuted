@@ -1525,9 +1525,24 @@ function settingsHTML() {
   <div class="sec-title">GitHub settings</div>
   <p class="sec-sub">Your current connection details.</p>
   <div class="field"><label class="label">Username</label><input class="input" value="${esc(GH.username)}" readonly></div>
-  <div class="field"><label class="label">Repository</label><input class="input" value="${esc(GH.repo)}" readonly></div>
+  <div class="field">
+    <label class="label">Repository name</label>
+    <div style="display:flex;gap:8px">
+      <input class="input" id="s-repo-edit" type="text" value="${esc(GH.repo)}" placeholder="your-repo-name">
+      <button class="btn btn-ghost" onclick="updateRepo()" style="flex-shrink:0">Update</button>
+    </div>
+    <div class="input-hint">Change this if you renamed your GitHub repo.</div>
+  </div>
   <div class="field"><label class="label">Token</label><input class="input" value="••••••••••••••••" type="password" readonly></div>
   <button class="btn btn-danger" onclick="disconnect()" style="margin-top:8px">Disconnect GitHub</button>`;
+}
+
+function updateRepo() {
+  const val = document.getElementById('s-repo-edit')?.value.trim();
+  if (!val) return;
+  GH.repo = val;
+  localStorage.setItem('un_dash_repo', val);
+  toast('Repository updated to "' + val + '" ✓');
 }
 
 // ── IMAGE UPLOAD ──────────────────────────────────────────────────
