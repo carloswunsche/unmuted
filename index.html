@@ -642,37 +642,68 @@ function albumHTML(rel) {
   <button class="btn btn-danger btn-sm" onclick="deleteRelease('${id}')">Delete this release</button>`;
 }
 
-function trackRowHTML(relId, idx, track) {
+function trackRowHTML(relId, idx, track, isSingles=false) {
+  const durDisplay = track.duration ? fmtDur(track.duration) : '';
   return `<div class="track-item" id="titem-${relId}-${idx}" data-idx="${idx}">
     <div class="track-item-header">
       <div class="track-num">${idx+1}</div>
       <div class="track-title-disp" id="tdisp-${relId}-${idx}">${esc(track.title||'New track')}</div>
+      ${durDisplay ? `<span style="font-size:11px;color:var(--text3);margin-left:auto;margin-right:8px;font-variant-numeric:tabular-nums">${durDisplay}</span>` : ''}
       <button class="btn btn-danger btn-sm btn-icon" onclick="removeTrackFromRelease('${relId}',${idx})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
-    <div class="track-fields">
-      <div>
-        <label class="label">Title</label>
-        <input class="input" id="ttitle-${relId}-${idx}" type="text" value="${esc(track.title||'')}" placeholder="Song name"
-          oninput="document.getElementById('tdisp-${relId}-${idx}').textContent=this.value||'New track';markDirty()">
+
+    ${isSingles ? `
+    <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:12px">
+      <div class="img-preview square" id="tcover-preview-${relId}-${idx}" style="width:60px;height:60px;flex-shrink:0">
+        <img id="tcover-img-${relId}-${idx}" src="" alt="">
+        <div class="img-preview-ph" id="tcover-ph-${relId}-${idx}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="20" height="20"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
       </div>
-      <div>
-        <label class="label">Duration <span>(auto)</span></label>
-        <input class="input" id="tdur-${relId}-${idx}" type="text" value="${track.duration?fmtDur(track.duration):''}" placeholder="auto" oninput="markDirty()" title="Detected automatically from the audio file. You can edit manually if needed.">
-      </div>
-    </div>
-    <div style="margin-top:10px">
-      <label class="label">Audio file</label>
-      <div style="display:flex;gap:8px;align-items:center">
-        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('tfile-${relId}-${idx}').click()">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          ${track.src ? 'Replace file' : 'Upload audio'}
+      <div style="flex:1">
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('tcover-file-${relId}-${idx}').click()" style="margin-bottom:6px">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          ${track.cover ? 'Replace cover' : 'Upload cover'}
         </button>
-        <span id="tfilename-${relId}-${idx}" style="font-size:12px;color:var(--text3)">${track.src||'No file yet'}</span>
+        <input type="file" id="tcover-file-${relId}-${idx}" class="file-input" accept="image/*" onchange="handleSingleCover('${relId}',${idx},this)">
+        <div style="margin-top:6px">
+          <label class="label" style="margin-bottom:4px">Year</label>
+          <input class="input" id="tyear-${relId}-${idx}" type="number" value="${track.year||new Date().getFullYear()}" oninput="markDirty()" style="height:30px;font-size:12px" placeholder="${new Date().getFullYear()}">
+        </div>
       </div>
-      <input type="file" id="tfile-${relId}-${idx}" class="file-input" accept=".mp3,.flac,.ogg,.wav,.m4a,.aac,audio/*" onchange="handleTrackFile('${relId}',${idx},this)">
-      <div id="tstatus-${relId}-${idx}"></div>
+    </div>` : ''}
+
+    <div style="margin-bottom:10px">
+      <label class="label">Title</label>
+      <input class="input" id="ttitle-${relId}-${idx}" type="text" value="${esc(track.title||'')}" placeholder="Song name"
+        oninput="document.getElementById('tdisp-${relId}-${idx}').textContent=this.value||'New track';markDirty()">
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div>
+        <label class="label">Audio file</label>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('tfile-${relId}-${idx}').click()">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            ${track.src ? 'Replace' : 'Upload audio'}
+          </button>
+          <span id="tfilename-${relId}-${idx}" style="font-size:11px;color:var(--text3)">${track.src||''}</span>
+        </div>
+        <input type="file" id="tfile-${relId}-${idx}" class="file-input" accept=".mp3,.flac,.ogg,.wav,.m4a,.aac,audio/*" onchange="handleTrackFile('${relId}',${idx},this)">
+        <div id="tstatus-${relId}-${idx}"></div>
+      </div>
+      <div>
+        <label class="label">Lyrics <span>(optional)</span></label>
+        <textarea class="textarea" id="tlyrics-${relId}-${idx}"
+          style="min-height:90px;font-size:12px;line-height:1.7"
+          placeholder="Paste or type the lyrics here…"
+          oninput="markDirty()">${esc(track.lyrics||'')} </textarea>
+      </div>
     </div>
     <input type="hidden" id="tsrc-${relId}-${idx}" value="${esc(track.src||'')}">
+    <input type="hidden" id="tdur-${relId}-${idx}" value="${track.duration||0}">
+    <input type="hidden" id="tlyrics-${relId}-${idx}" value="${esc(track.lyrics||'')}">
+    <input type="hidden" id="tcover-${relId}-${idx}" value="${esc(track.cover||'')}">
   </div>`;
 }
 
@@ -681,7 +712,7 @@ function addTrackToRelease(relId) {
   if (!rel) return;
   const idx = document.getElementById(`tracks-${relId}`).children.length;
   const div = document.createElement('div');
-  div.innerHTML = trackRowHTML(relId, idx, { title:'', src:'', duration:0 });
+  div.innerHTML = trackRowHTML(relId, idx, { title:'', src:'', duration:0 }, rel.type === 'singles');
   document.getElementById(`tracks-${relId}`).appendChild(div.firstElementChild);
   markDirty();
 }
@@ -730,8 +761,23 @@ function handleTrackFile(relId, idx, input) {
   tempAudio.preload = 'metadata';
   tempAudio.onloadedmetadata = () => {
     const secs = Math.round(tempAudio.duration);
-    const durField = document.getElementById(`tdur-${relId}-${idx}`);
-    if (durField) { durField.value = fmtDur(secs); durField.style.color = 'var(--green)'; setTimeout(() => durField.style.color = '', 1500); }
+    // Write to hidden duration field
+    const durHidden = document.getElementById(`tdur-${relId}-${idx}`);
+    if (durHidden) durHidden.value = secs;
+    // Show duration in the track header
+    const header = document.querySelector(`#titem-${relId}-${idx} .track-item-header`);
+    if (header) {
+      let durSpan = header.querySelector('.dur-display');
+      if (!durSpan) {
+        durSpan = document.createElement('span');
+        durSpan.className = 'dur-display';
+        durSpan.style.cssText = 'font-size:11px;color:var(--green);margin-left:auto;margin-right:8px;font-variant-numeric:tabular-nums';
+        const removeBtn = header.querySelector('.btn-danger');
+        header.insertBefore(durSpan, removeBtn);
+      }
+      durSpan.textContent = fmtDur(secs);
+      setTimeout(() => { if (durSpan) durSpan.style.color = 'var(--text3)'; }, 1500);
+    }
     URL.revokeObjectURL(objectUrl);
   };
   tempAudio.onerror = () => URL.revokeObjectURL(objectUrl);
@@ -892,6 +938,33 @@ function queueTrackFile(relId, idx, file, folder, filename) {
   const reader = new FileReader();
   reader.onload = e => {
     pendingUploads[`track-${relId}-${idx}`] = { b64: e.target.result.split(',')[1], path: fullPath, filename };
+    markDirty();
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleSingleCover(relId, idx, input) {
+  const file = input.files[0]; if (!file) return;
+  const rel = releases.find(r => r.id === relId);
+  const folder = rel.path.substring(0, rel.path.lastIndexOf('/'));
+  const ext = file.name.split('.').pop().toLowerCase();
+  const baseName = rel.data.tracks?.[idx]
+    ? (rel.data.tracks[idx].src||'track').replace(/\.[^.]+$/,'')
+    : `single-${idx}`;
+  const coverFilename = `${baseName}-cover.${ext}`;
+  const coverPath = `${folder}/${coverFilename}`;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const b64 = e.target.result.split(',')[1];
+    const key = `single-cover-${relId}-${idx}`;
+    pendingUploads[key] = { b64, path: coverPath, _b64cache: b64 };
+    // Update hidden field and preview
+    const hiddenEl = document.getElementById(`tcover-${relId}-${idx}`);
+    if (hiddenEl) hiddenEl.value = coverFilename;
+    const img = document.getElementById(`tcover-img-${relId}-${idx}`);
+    const ph = document.getElementById(`tcover-ph-${relId}-${idx}`);
+    if (img) { img.src = e.target.result; img.classList.add('loaded'); }
+    if (ph) ph.style.display = 'none';
     markDirty();
   };
   reader.readAsDataURL(file);
@@ -1071,14 +1144,24 @@ function getReleaseData(rel) {
     return { title: titleEl?.value||rel.data.title, type:'playlist', cover:'cover.jpg', tracks };
   }
 
+  const isSingles = rel.type === 'singles';
   const tracks = [];
   document.querySelectorAll(`[id^="titem-${id}-"]`).forEach(el => {
     const idx = el.dataset.idx;
     const title = document.getElementById(`ttitle-${id}-${idx}`)?.value.trim()||'';
     const src = document.getElementById(`tsrc-${id}-${idx}`)?.value.trim()||'';
-    const dur = parseDur(document.getElementById(`tdur-${id}-${idx}`)?.value||'');
-    if (title||src) tracks.push({ title, src, duration: dur });
+    const dur = parseInt(document.getElementById(`tdur-${id}-${idx}`)?.value||'0');
+    const lyrics = document.getElementById(`tlyrics-${id}-${idx}`)?.value.trim()||'';
+    const cover = document.getElementById(`tcover-${id}-${idx}`)?.value.trim()||'';
+    const year = parseInt(document.getElementById(`tyear-${id}-${idx}`)?.value)||new Date().getFullYear();
+    if (title||src) {
+      const t = { title, src, duration: dur };
+      if (lyrics) t.lyrics = lyrics;  // stored inline in JSON
+      if (isSingles) { t.cover = cover; t.year = year; }
+      tracks.push(t);
+    }
   });
+  if (isSingles) return { title: rel.data.title||'Singles', type: 'singles', tracks };
   return {
     title: titleEl?.value||rel.data.title||'',
     type: typeEl?.value || rel.type,
@@ -1160,12 +1243,15 @@ async function saveAll() {
 
     // 2. Upload pending track files
     for (const [key, val] of Object.entries(pendingUploads)) {
-      if (!key.startsWith('track-') || !val.b64) continue;
+      if (!val.b64) continue;
+      if (!key.startsWith('track-') && !key.startsWith('single-cover-')) continue;
       const sha = await ghGetSha(val.path);
-      await ghPutBinary(val.path, val.b64, sha, `Upload ${val.filename}`);
-      const parts = key.split('-'); // track-relId-idx
-      const statusEl = document.getElementById(`tstatus-${parts[1]}-${parts[2]}`);
-      if (statusEl) statusEl.innerHTML = `<div class="track-status done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>${val.filename} uploaded</div>`;
+      await ghPutBinary(val.path, val.b64, sha, `Upload ${val.filename||val.path.split('/').pop()}`);
+      if (key.startsWith('track-')) {
+        const parts = key.split('-');
+        const statusEl = document.getElementById(`tstatus-${parts[1]}-${parts[2]}`);
+        if (statusEl) statusEl.innerHTML = `<div class="track-status done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>${val.filename} uploaded</div>`;
+      }
       pendingUploads[key].b64 = null;
     }
 
