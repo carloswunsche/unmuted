@@ -397,6 +397,20 @@ let currentReleaseId = null;
 
 // ── BOOT ─────────────────────────────────────────────────────────
 async function boot() {
+  // Check if credentials were passed via URL hash (cross-domain redirect from setup)
+  const hash = location.hash;
+  if (hash.startsWith('#unmuted-setup=')) {
+    try {
+      const creds = JSON.parse(atob(hash.slice('#unmuted-setup='.length)));
+      if (creds.t && creds.u) {
+        localStorage.setItem('un_dash_token', creds.t);
+        localStorage.setItem('un_dash_user', creds.u);
+        localStorage.setItem('un_dash_repo', creds.r || 'music');
+        GH = { token: creds.t, username: creds.u, repo: creds.r || 'music' };
+        history.replaceState(null, '', location.pathname); // clean the URL
+      }
+    } catch(e) {}
+  }
   if (GH.token && GH.username) { showMain(); await loadData(); }
   else showSetup();
 }
@@ -733,7 +747,9 @@ function startRedirectCountdown(url) {
 function doRedirect(url) {
   if (_countdownInterval) clearInterval(_countdownInterval);
   if (_pollInterval) clearInterval(_pollInterval);
-  window.location.href = url;
+  // Pass credentials in the hash so the new page can bootstrap localStorage
+  const creds = btoa(JSON.stringify({ t: GH.token, u: GH.username, r: GH.repo }));
+  window.location.href = url + '#unmuted-setup=' + creds;
 }
 
 function copySetupUrl() {
