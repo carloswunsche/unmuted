@@ -250,8 +250,14 @@
     <div class="setup-icon">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
     </div>
-    <div class="setup-title">Get started with Unmuted</div>
-    <p class="setup-sub">Your music lives on your own free GitHub account. Just paste a token and we handle everything else.</p>
+    <div class="setup-title" id="setup-title">Get started with Unmuted</div>
+    <p class="setup-sub" id="setup-sub">Your music lives on your own free GitHub account. Just paste a token and we handle everything else.</p>
+
+    <!-- Language selector -->
+    <div style="display:flex;gap:6px;justify-content:center;margin-bottom:20px">
+      <button id="lang-en" onclick="setLang('en')" style="border:none;background:var(--surface2);color:var(--text);font-family:var(--font);font-size:12px;font-weight:600;padding:4px 12px;border-radius:20px;cursor:pointer;transition:all var(--ease)">EN</button>
+      <button id="lang-es" onclick="setLang('es')" style="border:none;background:transparent;color:var(--text3);font-family:var(--font);font-size:12px;font-weight:600;padding:4px 12px;border-radius:20px;cursor:pointer;transition:all var(--ease)">ES</button>
+    </div>
 
     <!-- Step indicator -->
     <div id="setup-steps-indicator" style="display:flex;align-items:center;gap:8px;margin-bottom:24px;justify-content:center">
@@ -263,22 +269,21 @@
     <!-- Step 1: Get token -->
     <div id="setup-step-1">
       <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:16px;margin-bottom:20px;text-align:left">
-        <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--text)">Create a free GitHub account and token</div>
+        <div id="setup-steps-title" style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--text)">Create a free GitHub account and token</div>
         <div class="setup-steps">
-          <div class="setup-step"><div class="setup-step-num">1</div><div>Go to <a href="https://github.com/signup" target="_blank" style="color:var(--accent2)">github.com/signup</a> and create a free account <span style="color:var(--text3)">(skip if you have one)</span></div></div>
-          <div class="setup-step"><div class="setup-step-num">2</div><div>Open <a href="https://github.com/settings/tokens/new?description=Unmuted&scopes=repo&default_expires_at=none" target="_blank" style="color:var(--accent2)">this link</a> to pre-fill a token for Unmuted</div></div>
-          <div class="setup-step"><div class="setup-step-num">3</div><div>Set expiration to <strong>No expiration</strong>, scroll down, click <strong style="color:var(--green)">Generate token</strong></div></div>
-          <div class="setup-step"><div class="setup-step-num">4</div><div>Copy the token that appears and paste it below</div></div>
+          <div class="setup-step"><div class="setup-step-num">1</div><div id="setup-step-text-1">Go to <a href="https://github.com/signup" target="_blank" style="color:var(--accent2)">github.com/signup</a> and create a free account <span style="color:var(--text3)">(skip if you have one)</span></div></div>
+          <div class="setup-step"><div class="setup-step-num">2</div><div id="setup-step-text-2">Open <a href="https://github.com/settings/tokens/new?description=Unmuted&scopes=repo&default_expires_at=none" target="_blank" style="color:var(--accent2)">this link</a>, scroll down, click <strong style="color:var(--green)">Generate token</strong></div></div>
+          <div class="setup-step"><div class="setup-step-num">3</div><div id="setup-step-text-3">Copy the token that appears and paste it below</div></div>
         </div>
       </div>
       <input type="text" style="display:none" aria-hidden="true">
       <input type="password" style="display:none" aria-hidden="true">
       <div class="field">
-        <label class="label">Paste your token here</label>
+        <label class="label" id="setup-token-label">Paste your token here</label>
         <input class="input" id="token-input" type="text" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="-webkit-text-security:disc;font-family:monospace" onkeydown="if(event.key==='Enter')connectGitHub()">
       </div>
       <div class="alert alert-danger" id="setup-error"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span id="setup-error-msg"></span></div>
-      <button class="btn btn-primary" id="setup-connect-btn" style="width:100%;justify-content:center" onclick="connectGitHub()">
+      <button class="btn btn-primary" id="setup-connect-btn" style="width:100%;justify-content:center" onclick="connectGitHub()" data-label-en="Connect" data-label-es="Conectar">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
         Connect
       </button>
@@ -304,7 +309,7 @@
       <div style="font-size:18px;font-weight:700;margin-bottom:8px">You're all set!</div>
       <div id="setup-done-msg" style="font-size:13px;color:var(--text2);margin-bottom:20px"></div>
       <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="enterDashboard()">
-        Open my dashboard
+        <span id="done-btn-text">Open my dashboard</span>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
       </button>
     </div>
@@ -456,6 +461,79 @@ async function ghListFolder(folder) {
 }
 
 // ── CONNECT ──────────────────────────────────────────────────────
+const LANG = {
+  en: {
+    title: 'Get started with Unmuted',
+    sub: 'Your music lives on your own free GitHub account. Just paste a token and we handle everything else.',
+    stepsTitle: 'Create a free GitHub account and token',
+    step1: 'Go to <a href="https://github.com/signup" target="_blank" style="color:var(--accent2)">github.com/signup</a> and create a free account <span style="color:var(--text3)">(skip if you have one)</span>',
+    step2: 'Open <a href="https://github.com/settings/tokens/new?description=Unmuted&scopes=repo&default_expires_at=none" target="_blank" style="color:var(--accent2)">this link</a>, scroll down, click <strong style="color:var(--green)">Generate token</strong>',
+    step3: 'Copy the token that appears and paste it below',
+    tokenLabel: 'Paste your token here',
+    connectBtn: 'Connect',
+    invalidToken: 'Token is invalid. Make sure you copied it correctly.',
+    progVerify: 'Verifying token...',
+    progRepo: 'Checking your repository...',
+    progCreate: 'Creating your music repository...',
+    progInit: 'Initializing your artist page...',
+    progSingles: 'Setting up your singles...',
+    progPages: 'Enabling GitHub Pages...',
+    progPages2: 'Your page will be live in ~2 minutes',
+    progDone: 'All done!',
+    doneBtn: 'Open my dashboard',
+  },
+  es: {
+    title: 'Empieza con Unmuted',
+    sub: 'Tu musica vive en tu propia cuenta gratuita de GitHub. Solo pega un token y nosotros hacemos el resto.',
+    stepsTitle: 'Crea una cuenta de GitHub y un token',
+    step1: 'Ve a <a href="https://github.com/signup" target="_blank" style="color:var(--accent2)">github.com/signup</a> y crea una cuenta gratuita <span style="color:var(--text3)">(omite este paso si ya tienes una)</span>',
+    step2: 'Abre <a href="https://github.com/settings/tokens/new?description=Unmuted&scopes=repo&default_expires_at=none" target="_blank" style="color:var(--accent2)">este enlace</a>, baja hasta abajo y haz clic en <strong style="color:var(--green)">Generate token</strong>',
+    step3: 'Copia el token que aparece y pegalo abajo',
+    tokenLabel: 'Pega tu token aqui',
+    connectBtn: 'Conectar',
+    invalidToken: 'El token no es valido. Asegurate de haberlo copiado correctamente.',
+    progVerify: 'Verificando token...',
+    progRepo: 'Revisando tu repositorio...',
+    progCreate: 'Creando tu repositorio de musica...',
+    progInit: 'Inicializando tu pagina de artista...',
+    progSingles: 'Configurando tus singles...',
+    progPages: 'Activando GitHub Pages...',
+    progPages2: 'Tu pagina estara lista en ~2 minutos',
+    progDone: 'Todo listo!',
+    doneBtn: 'Abrir mi panel',
+  }
+};
+
+let currentLang = 'en';
+
+function setLang(lang) {
+  currentLang = lang;
+  const L = LANG[lang];
+  const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+  set('setup-title', L.title);
+  set('setup-sub', L.sub);
+  set('setup-steps-title', L.stepsTitle);
+  set('setup-step-text-1', L.step1);
+  set('setup-step-text-2', L.step2);
+  set('setup-step-text-3', L.step3);
+  set('setup-token-label', L.tokenLabel);
+  const btn = document.getElementById('setup-connect-btn');
+  if (btn && !btn.disabled) btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg> ' + L.connectBtn;
+  const doneBtn = document.querySelector('#setup-step-3 .btn-primary');
+  if (doneBtn) doneBtn.childNodes[0].textContent = L.doneBtn + ' ';
+  // Style buttons
+  document.getElementById('lang-en').style.background = lang === 'en' ? 'var(--surface2)' : 'transparent';
+  document.getElementById('lang-en').style.color = lang === 'en' ? 'var(--text)' : 'var(--text3)';
+  document.getElementById('lang-es').style.background = lang === 'es' ? 'var(--surface2)' : 'transparent';
+  document.getElementById('lang-es').style.color = lang === 'es' ? 'var(--text)' : 'var(--text3)';
+}
+
+function autoDetectLang() {
+  const browserLang = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
+  const lang = browserLang.startsWith('es') ? 'es' : 'en';
+  setLang(lang);
+}
+
 function setSetupStep(n) {
   [1,2,3].forEach(i => {
     document.getElementById('setup-step-' + i).style.display = i === n ? 'block' : 'none';
@@ -487,16 +565,16 @@ async function connectGitHub() {
 
   try {
     // Step 1: Verify token and get username automatically
-    setSetupProgress(10, 'Verifying token...', '');
+    setSetupProgress(10, LANG[currentLang].progVerify, '');
     const userR = await fetch('https://api.github.com/user', { headers: { Authorization: 'token ' + token } });
-    if (userR.status === 401) throw new Error('Token is invalid. Make sure you copied it correctly.');
+    if (userR.status === 401) throw new Error(LANG[currentLang].invalidToken);
     if (!userR.ok) throw new Error('GitHub returned error ' + userR.status);
     const userData = await userR.json();
     const username = userData.login;
     const repo = 'music';
 
     setSetupStep(2);
-    setSetupProgress(20, 'Checking your repository...', '@' + username);
+    setSetupProgress(20, LANG[currentLang].progRepo, '@' + username);
 
     // Step 2: Check if repo exists
     const repoR = await fetch('https://api.github.com/repos/' + username + '/' + repo, { headers: { Authorization: 'token ' + token } });
@@ -504,7 +582,7 @@ async function connectGitHub() {
 
     if (repoR.status === 404) {
       // Create the repo
-      setSetupProgress(35, 'Creating your music repository...', username + '/' + repo);
+      setSetupProgress(35, LANG[currentLang].progCreate, username + '/' + repo);
       const createR = await fetch('https://api.github.com/user/repos', {
         method: 'POST',
         headers: { Authorization: 'token ' + token, 'Content-Type': 'application/json' },
@@ -529,17 +607,17 @@ async function connectGitHub() {
 
     if (isNewRepo) {
       // Step 3: Initialize artist.json
-      setSetupProgress(55, 'Initializing your artist page...', '');
+      setSetupProgress(55, LANG[currentLang].progInit, '');
       const artistJson = JSON.stringify({ schema: 'unmuted/v1', name: '', bio: '', location: '', avatar: 'avatar.jpg', links: {}, releases: ['singles/singles.json'], recommendations: [] }, null, 2);
       await ghPut('artist.json', artistJson, null, 'Initialize Unmuted artist page');
 
       // Step 4: Initialize singles/singles.json
-      setSetupProgress(70, 'Setting up your singles...', '');
+      setSetupProgress(70, LANG[currentLang].progSingles, '');
       const singlesJson = JSON.stringify({ title: 'Singles', type: 'singles', tracks: [] }, null, 2);
       await ghPut('singles/singles.json', singlesJson, null, 'Initialize singles');
 
       // Step 5: Enable GitHub Pages
-      setSetupProgress(85, 'Enabling GitHub Pages...', 'Your page will be live in ~2 minutes');
+      setSetupProgress(85, LANG[currentLang].progPages, LANG[currentLang].progPages2);
       try {
         await fetch('https://api.github.com/repos/' + username + '/' + repo + '/pages', {
           method: 'POST',
@@ -549,7 +627,7 @@ async function connectGitHub() {
       } catch(e) { /* Pages may already be enabled or fail silently */ }
     }
 
-    setSetupProgress(100, 'All done!', '');
+    setSetupProgress(100, LANG[currentLang].progDone, '');
     setSetupStep(3);
 
     const pagesUrl = 'https://' + username + '.github.io/' + repo;
