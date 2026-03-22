@@ -276,25 +276,21 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
       Social links
     </button>
+    <button class="nav-item" id="nav-recs" onclick="showSection('recs')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Recommendations
+    </button>
     <div class="nav-section">Releases</div>
     <div id="releases-nav"></div>
     <button class="nav-add" onclick="openNewReleaseModal()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       New release
     </button>
-    <div class="nav-section">Discover</div>
-    <button class="nav-item" id="nav-recs" onclick="showSection('recs')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      Recommendations
-    </button>
-    <div class="nav-section">Settings</div>
     <button class="nav-item" id="nav-settings" onclick="showSection('settings')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
-      GitHub settings
+      Settings
     </button>
-    <div id="connected-badge" style="display:none;font-size:10px;font-weight:700;color:var(--green);padding:2px 10px 6px 36px;letter-spacing:.04em;display:none">
-      ● Connected
-    </div>
+
   </nav>
 
   <main class="content" id="main-content">
@@ -344,7 +340,7 @@ function showMain() {
   document.getElementById('setup-screen').style.display = 'none';
   document.getElementById('main-layout').style.display = 'grid';
   const badge = document.getElementById('connected-badge');
-  if (badge) badge.style.display = 'block';
+  if (badge) badge.style.display = 'flex';
   document.getElementById('copy-link-btn').style.display = 'inline-flex';
   document.getElementById('save-btn').disabled = false;
   updateShareUrls();
