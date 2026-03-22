@@ -641,12 +641,19 @@ async function connectGitHub() {
       await ghPut('artist.json', artistJson, null, 'Initialize Unmuted artist page');
 
       // Step 4: Initialize singles/singles.json
-      setSetupProgress(70, LANG[currentLang].progSingles, '');
+      setSetupProgress(65, LANG[currentLang].progSingles, '');
       const singlesJson = JSON.stringify({ title: 'Singles', type: 'singles', tracks: [] }, null, 2);
       await ghPut('singles/singles.json', singlesJson, null, 'Initialize singles');
 
-      // Step 5: Enable GitHub Pages
-      setSetupProgress(85, LANG[currentLang].progPages, LANG[currentLang].progPages2);
+      // Step 5: Upload dashboard as index.html
+      setSetupProgress(75, currentLang === 'es' ? 'Subiendo el panel...' : 'Uploading dashboard...', '');
+      try {
+        const dashboardHtml = await fetch(location.href).then(r => r.text());
+        await ghPut('index.html', dashboardHtml, null, 'Add Unmuted dashboard');
+      } catch(e) { /* non-fatal — user can upload manually */ }
+
+      // Step 6: Enable GitHub Pages
+      setSetupProgress(88, LANG[currentLang].progPages, LANG[currentLang].progPages2);
       try {
         await fetch('https://api.github.com/repos/' + username + '/' + repo + '/pages', {
           method: 'POST',
