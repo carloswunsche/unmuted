@@ -457,14 +457,30 @@ async function loadData() {
       showImgPreview('avatar', `data:image/jpeg;base64,${b64}`);
     } catch {}
 
-    // Auto-create singles release if not present
+    // Auto-create singles release if not present — write it to GitHub immediately
     const hasSingles = releases.some(r => r.type === 'singles');
     if (!hasSingles) {
       const singlesPath = 'singles/singles.json';
       const singlesData = { title: 'Singles', type: 'singles', tracks: [] };
       const singlesId = 'singles-singles';
-      releases.unshift({ id: singlesId, type: 'singles', data: singlesData, path: singlesPath, _sha: null, _dirty: true });
-      markDirty();
+      try {
+        const json = JSON.stringify(singlesData, null, 2);
+        const result = await ghPut(singlesPath, json, null, 'Initialize singles');
+        releases.unshift({ id: singlesId, type: 'singles', data: singlesData, path: singlesPath, _sha: result.content.sha });
+        // Also update artist.json to include it
+        if (!artistData.releases) artistData.releases = [];
+        if (!artistData.releases.includes(singlesPath)) {
+          artistData.releases.unshift(singlesPath);
+          const aSha = artistData._sha || await ghGetSha('artist.json');
+          const aJson = JSON.stringify({ ...artistData, _sha: undefined }, null, 2);
+          const aResult = await ghPut('artist.json', aJson, aSha, 'Add singles to releases');
+          artistData._sha = aResult.content.sha;
+        }
+      } catch(e) {
+        // If we can't write (e.g. no token yet), just add locally
+        releases.unshift({ id: singlesId, type: 'singles', data: singlesData, path: singlesPath, _sha: null, _dirty: true });
+        markDirty();
+      }
     } else {
       // Ensure singles is always first in the nav
       const idx = releases.findIndex(r => r.type === 'singles');
@@ -537,6 +553,11 @@ function showSection(name) {
 }
 
 function showRelease(id) {
+  // Save current release DOM state before switching
+  if (currentReleaseId && currentReleaseId !== id) {
+    const cur = releases.find(r => r.id === currentReleaseId);
+    if (cur) cur.data = getReleaseData(cur);
+  }
   currentSection = 'release';
   currentReleaseId = id;
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
@@ -1652,7 +1673,13 @@ function getReleaseData(rel) {
 
   const isSingles = rel.type === 'singles';
   const tracks = [];
-  document.querySelectorAll(`[id^="titem-${id}-"]`).forEach(el => {
+  // If this release is not currently displayed, use existing data
+  if (currentReleaseId !== id) return {
+    ...rel.data,
+    _sha: undefined,
+    _dirty: undefined
+  };
+  document.querySelectorAll(`[id^="twrap-${id}-"]`).forEach(el => {
     const idx = el.dataset.idx;
     const src = document.getElementById(`tsrc-${id}-${idx}`)?.value.trim()||'';
     const dur = parseInt(document.getElementById(`tdur-${id}-${idx}`)?.value||'0');
@@ -1865,7 +1892,7 @@ async function saveAll() {
 
     // 3. Save all release JSON files
     for (const rel of releases) {
-      const data = currentReleaseId === rel.id ? getReleaseData(rel) : rel.data;
+      const data = getReleaseData(rel); // always read from DOM if visible, else rel.data
       // JSON.stringify handles escaping of newlines, special chars, etc.
       const cleanData = JSON.parse(JSON.stringify({ ...data, _sha: undefined, _dirty: undefined }));
       const json = JSON.stringify(cleanData, null, 2);
