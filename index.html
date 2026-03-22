@@ -645,12 +645,12 @@ async function connectGitHub() {
       const singlesJson = JSON.stringify({ title: 'Singles', type: 'singles', tracks: [] }, null, 2);
       await ghPut('singles/singles.json', singlesJson, null, 'Initialize singles');
 
-      // Step 5: Upload dashboard as index.html
+      // Step 5: Upload dashboard as index.html — read from DOM, no network needed
       setSetupProgress(75, currentLang === 'es' ? 'Subiendo el panel...' : 'Uploading dashboard...', '');
       try {
-        const dashboardHtml = await fetch(location.href).then(r => r.text());
+        const dashboardHtml = '<!DOCTYPE html>' + '\n' + document.documentElement.outerHTML;
         await ghPut('index.html', dashboardHtml, null, 'Add Unmuted dashboard');
-      } catch(e) { /* non-fatal — user can upload manually */ }
+      } catch(e) { console.warn('Could not upload index.html:', e); }
 
       // Step 6: Enable GitHub Pages
       setSetupProgress(88, LANG[currentLang].progPages, LANG[currentLang].progPages2);
