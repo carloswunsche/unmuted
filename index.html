@@ -237,7 +237,7 @@
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
       Copy link
     </button>
-    <button class="btn btn-primary" id="save-btn" onclick="saveAll()" disabled>
+    <button class="btn btn-primary" id="save-btn" onclick="saveAll()" disabled style="display:none">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
       Save changes
     </button>
@@ -246,6 +246,12 @@
 
 <!-- SETUP SCREEN -->
 <div id="setup-screen" class="setup-screen" style="display:none">
+  <!-- Language selector — outside the card -->
+  <div style="display:flex;gap:8px;justify-content:center;margin-bottom:20px">
+    <button id="lang-en" onclick="setLang('en')" style="border:none;background:var(--surface2);color:var(--text);font-family:var(--font);font-size:13px;font-weight:600;padding:6px 16px;border-radius:20px;cursor:pointer;transition:all var(--ease)">English</button>
+    <button id="lang-es" onclick="setLang('es')" style="border:none;background:transparent;color:var(--text3);font-family:var(--font);font-size:13px;font-weight:600;padding:6px 16px;border-radius:20px;cursor:pointer;transition:all var(--ease)">Español</button>
+  </div>
+
   <div class="setup-card" style="max-width:520px">
     <div class="setup-icon">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
@@ -253,27 +259,14 @@
     <div class="setup-title" id="setup-title">Get started with Unmuted</div>
     <p class="setup-sub" id="setup-sub">Your music lives on your own free GitHub account. Just paste a token and we handle everything else.</p>
 
-    <!-- Language selector -->
-    <div style="display:flex;gap:6px;justify-content:center;margin-bottom:20px">
-      <button id="lang-en" onclick="setLang('en')" style="border:none;background:var(--surface2);color:var(--text);font-family:var(--font);font-size:12px;font-weight:600;padding:4px 12px;border-radius:20px;cursor:pointer;transition:all var(--ease)">EN</button>
-      <button id="lang-es" onclick="setLang('es')" style="border:none;background:transparent;color:var(--text3);font-family:var(--font);font-size:12px;font-weight:600;padding:4px 12px;border-radius:20px;cursor:pointer;transition:all var(--ease)">ES</button>
-    </div>
-
-    <!-- Step indicator -->
-    <div id="setup-steps-indicator" style="display:flex;align-items:center;gap:8px;margin-bottom:24px;justify-content:center">
-      <div id="step-dot-1" style="width:8px;height:8px;border-radius:50%;background:var(--accent)"></div>
-      <div id="step-dot-2" style="width:8px;height:8px;border-radius:50%;background:var(--border2)"></div>
-      <div id="step-dot-3" style="width:8px;height:8px;border-radius:50%;background:var(--border2)"></div>
-    </div>
-
     <!-- Step 1: Get token -->
     <div id="setup-step-1">
       <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:16px;margin-bottom:20px;text-align:left">
-        <div id="setup-steps-title" style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--text)">Create a free GitHub account and token</div>
+        <div id="setup-steps-title" style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--text)">Host your music using GitHub</div>
         <div class="setup-steps">
-          <div class="setup-step"><div class="setup-step-num">1</div><div id="setup-step-text-1">Go to <a href="https://github.com/signup" target="_blank" style="color:var(--accent2)">github.com/signup</a> and create a free account <span style="color:var(--text3)">(skip if you have one)</span></div></div>
-          <div class="setup-step"><div class="setup-step-num">2</div><div id="setup-step-text-2">Open <a href="https://github.com/settings/tokens/new?description=Unmuted&scopes=repo&default_expires_at=none" target="_blank" style="color:var(--accent2)">this link</a>, scroll down, click <strong style="color:var(--green)">Generate token</strong></div></div>
-          <div class="setup-step"><div class="setup-step-num">3</div><div id="setup-step-text-3">Copy the token that appears and paste it below</div></div>
+          <div class="setup-step"><div class="setup-step-num">1</div><div id="setup-step-text-1">Follow <a href="https://github.com/settings/tokens/new?description=Unmuted&scopes=repo&default_expires_at=none" target="_blank" style="color:var(--accent2)">this link</a> and create a free account</div></div>
+          <div class="setup-step"><div class="setup-step-num">2</div><div id="setup-step-text-2">Scroll all the way down and click <strong style="color:var(--green)">Generate token</strong></div></div>
+          <div class="setup-step"><div class="setup-step-num">3</div><div id="setup-step-text-3">Copy the token (long string of letters and numbers) and paste it below</div></div>
         </div>
       </div>
       <input type="text" style="display:none" aria-hidden="true">
@@ -285,7 +278,7 @@
       <div class="alert alert-danger" id="setup-error"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span id="setup-error-msg"></span></div>
       <button class="btn btn-primary" id="setup-connect-btn" style="width:100%;justify-content:center" onclick="connectGitHub()" data-label-en="Connect" data-label-es="Conectar">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
-        Connect
+        Create dashboard
       </button>
     </div>
 
@@ -306,7 +299,7 @@
       <div style="width:60px;height:60px;background:var(--green-bg);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;border:1px solid var(--green-border)">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
       </div>
-      <div style="font-size:18px;font-weight:700;margin-bottom:6px" id="setup-done-title">You're all set!</div>
+      <div style="font-size:18px;font-weight:700;margin-bottom:6px" id="setup-done-title">Almost there...</div>
       <div id="setup-done-msg" style="font-size:13px;color:var(--text2);margin-bottom:16px"></div>
 
       <!-- Their dashboard URL -->
@@ -318,7 +311,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
           </button>
         </div>
-        <div style="font-size:11px;color:var(--text3);margin-top:6px" id="setup-bookmark-hint">Save this link or add it to your bookmarks.</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px" id="setup-bookmark-hint">This is your dashboard. Keep this link safe!</div>
       </div>
 
       <!-- Countdown + progress -->
@@ -428,6 +421,7 @@ function showMain() {
   document.getElementById('copy-link-btn').style.display = 'inline-flex';
   document.getElementById('view-page-btn').style.display = 'inline-flex';
   document.getElementById('save-btn').disabled = false;
+  document.getElementById('save-btn').style.display = 'inline-flex';
   updateShareUrls();
   renderSection('profile');
 }
@@ -496,12 +490,12 @@ const LANG = {
   en: {
     title: 'Get started with Unmuted',
     sub: 'Your music lives on your own free GitHub account. Just paste a token and we handle everything else.',
-    stepsTitle: 'Create a free GitHub account and token',
-    step1: 'Go to <a href="https://github.com/signup" target="_blank" style="color:var(--accent2)">github.com/signup</a> and create a free account <span style="color:var(--text3)">(skip if you have one)</span>',
-    step2: 'Open <a href="https://github.com/settings/tokens/new?description=Unmuted&scopes=repo&default_expires_at=none" target="_blank" style="color:var(--accent2)">this link</a>, scroll down, click <strong style="color:var(--green)">Generate token</strong>',
-    step3: 'Copy the token that appears and paste it below',
+    stepsTitle: 'Host your music using GitHub',
+    step1: 'Follow <a href="https://github.com/settings/tokens/new?description=Unmuted&scopes=repo&default_expires_at=none" target="_blank" style="color:var(--accent2)">this link</a> and create a free account',
+    step2: 'Scroll all the way down and click <strong style="color:var(--green)">Generate token</strong>',
+    step3: 'Copy the token (long string of letters and numbers) and paste it below',
     tokenLabel: 'Paste your token here',
-    connectBtn: 'Connect',
+    connectBtn: 'Create dashboard',
     invalidToken: 'Token is invalid. Make sure you copied it correctly.',
     progVerify: 'Verifying token...',
     progRepo: 'Checking your repository...',
@@ -513,20 +507,20 @@ const LANG = {
     progDone: 'All done!',
     doneBtn: 'Open my dashboard',
     urlLabel: 'Your dashboard URL',
-    bookmarkHint: 'Save this link or add it to your bookmarks.',
+    bookmarkHint: 'This is your dashboard. Keep this link safe!',
     countdownMsg: 'Setting up GitHub Pages...',
     liveMsg: 'Your page is live!',
-    doneTitle: "You're all set!",
+    doneTitle: 'Almost there...',
   },
   es: {
     title: 'Empieza con Unmuted',
     sub: 'Tu musica vive en tu propia cuenta gratuita de GitHub. Solo pega un token y nosotros hacemos el resto.',
-    stepsTitle: 'Crea una cuenta de GitHub y un token',
-    step1: 'Ve a <a href="https://github.com/signup" target="_blank" style="color:var(--accent2)">github.com/signup</a> y crea una cuenta gratuita <span style="color:var(--text3)">(omite este paso si ya tienes una)</span>',
-    step2: 'Abre <a href="https://github.com/settings/tokens/new?description=Unmuted&scopes=repo&default_expires_at=none" target="_blank" style="color:var(--accent2)">este enlace</a>, baja hasta abajo y haz clic en <strong style="color:var(--green)">Generate token</strong>',
-    step3: 'Copia el token que aparece y pegalo abajo',
+    stepsTitle: 'Aloja tu musica en GitHub',
+    step1: 'Sigue <a href="https://github.com/settings/tokens/new?description=Unmuted&scopes=repo&default_expires_at=none" target="_blank" style="color:var(--accent2)">este enlace</a> y crea una cuenta gratuita',
+    step2: 'Baja hasta el final y haz clic en <strong style="color:var(--green)">Generate token</strong>',
+    step3: 'Copia el token (cadena larga de letras y numeros) y pegalo abajo',
     tokenLabel: 'Pega tu token aqui',
-    connectBtn: 'Conectar',
+    connectBtn: 'Crear mi panel',
     invalidToken: 'El token no es valido. Asegurate de haberlo copiado correctamente.',
     progVerify: 'Verificando token...',
     progRepo: 'Revisando tu repositorio...',
@@ -538,10 +532,10 @@ const LANG = {
     progDone: 'Todo listo!',
     doneBtn: 'Abrir mi panel',
     urlLabel: 'Tu URL del panel',
-    bookmarkHint: 'Guarda este enlace o agragalo a tus marcadores.',
+    bookmarkHint: 'Este es tu panel. Guarda bien este enlace!',
     countdownMsg: 'Configurando GitHub Pages...',
     liveMsg: 'Tu pagina esta lista!',
-    doneTitle: 'Todo listo!',
+    doneTitle: 'Ya casi...',
   }
 };
 
@@ -559,7 +553,7 @@ function setLang(lang) {
   set('setup-step-text-3', L.step3);
   set('setup-token-label', L.tokenLabel);
   const btn = document.getElementById('setup-connect-btn');
-  if (btn && !btn.disabled) btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg> ' + L.connectBtn;
+  if (btn && !btn.disabled) btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg> ' + (L.connectBtn || 'Create dashboard');
   set('setup-done-title', L.doneTitle || "You're all set!");
   set('setup-url-label', L.urlLabel || 'Your dashboard URL');
   set('setup-bookmark-hint', L.bookmarkHint || 'Save this link or add it to your bookmarks.');
@@ -684,8 +678,8 @@ async function connectGitHub() {
     const isOwnPage = location.hostname === username + '.github.io';
     document.getElementById('setup-done-msg').innerHTML =
       currentLang === 'es'
-        ? 'Tu repositorio <strong>' + username + '/' + repo + '</strong> esta listo.'
-        : 'Your repo <strong>' + username + '/' + repo + '</strong> is ready.';
+        ? 'Tu panel estara listo en menos de 2 minutos.'
+        : 'Your dashboard will be ready in less than 2 minutes.';
     // Auto-trigger redirect flow
     if (!isOwnPage) {
       setTimeout(enterDashboard, 400);
